@@ -3,68 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>KaDelivery Beta</title>
+    <title>KaDelivery Premium</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Poppins', sans-serif; background: #0f0f0f; color: white; overflow-x: hidden; }
-        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; }
-        .gold-text { background: linear-gradient(45deg, #ffd700, #ff8c00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .btn-gold { background: linear-gradient(45deg, #ffd700, #ff8c00); color: black; font-weight: bold; transition: 0.3s; }
-        .btn-gold:active { transform: scale(0.95); }
-        .page { display: none; animation: fadeIn 0.5s ease-out forwards; }
+        :root { --gold: #D4AF37; --dark: #0A0A0A; --card: #161616; }
+        body { font-family: 'Outfit', sans-serif; background: var(--dark); color: white; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+        
+        /* Premium Background Glow */
+        .glow { position: fixed; top: -10%; right: -10%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(212,175,55,0.15) 0%, rgba(0,0,0,0) 70%); z-index: -1; }
+        
+        /* Glassmorphism */
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 28px; }
+        .gold-gradient { background: linear-gradient(135deg, #F5D17E 0%, #D4AF37 50%, #B8860B 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        /* Animations */
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+        .page { display: none; animation: slideIn 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
         .active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .restaurant-card { transition: 0.4s; cursor: pointer; }
-        .restaurant-card:hover { transform: scale(1.02); }
+        
+        /* Smooth interactions */
+        .tap-scale { transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .tap-scale:active { transform: scale(0.92); }
+        
+        .category-chip { padding: 8px 20px; border-radius: 50px; background: #1a1a1a; border: 1px solid #333; font-size: 0.8rem; white-space: nowrap; }
+        .category-chip.active { background: var(--gold); color: black; font-weight: 700; border: none; }
     </style>
 </head>
 <body>
+    <div class="glow"></div>
 
-    <div id="login-page" class="page active flex flex-col items-center justify-center h-screen px-8 text-center">
-        <h1 class="text-5xl font-extrabold mb-2 gold-text">KaDelivery</h1>
-        <p class="text-gray-400 mb-12">The Sexiest Food in Georgia 🇬🇪</p>
+    <div id="login-page" class="page active flex flex-col items-center justify-center h-screen px-10">
+        <div class="mb-10 text-center">
+            <h1 class="text-6xl font-extrabold tracking-tighter gold-gradient">Ka</h1>
+            <h2 class="text-2xl font-light tracking-widest uppercase text-gray-400">Delivery</h2>
+        </div>
         
-        <div class="glass p-8 w-full max-w-sm">
-            <input type="text" placeholder="Your Name" class="w-full bg-transparent border-b border-gray-600 p-3 mb-6 focus:outline-none focus:border-orange-400 transition">
-            <input type="password" placeholder="Passcode" class="w-full bg-transparent border-b border-gray-600 p-3 mb-10 focus:outline-none focus:border-orange-400 transition">
-            <button onclick="navTo('home-page')" class="btn-gold w-full py-4 rounded-full shadow-lg shadow-orange-500/20">LET'S EAT</button>
+        <div class="glass p-8 w-full space-y-6">
+            <div class="space-y-1">
+                <label class="text-xs uppercase tracking-widest text-gray-500 ml-2">Phone or Email</label>
+                <input type="text" placeholder="Gamer123" class="w-full bg-[#111] rounded-2xl p-4 border border-white/5 focus:border-[#D4AF37]/50 outline-none transition">
+            </div>
+            <button onclick="navTo('home-page')" class="tap-scale w-full py-5 rounded-2xl bg-gradient-to-r from-[#F5D17E] to-[#B8860B] text-black font-black text-lg shadow-2xl shadow-yellow-500/10">
+                ENTER THE KITCHEN
+            </button>
         </div>
     </div>
 
-    <div id="home-page" class="page px-6 py-12">
-        <header class="flex justify-between items-center mb-10">
-            <div>
-                <h2 class="text-3xl font-bold">What's Cooking?</h2>
-                <p class="text-gray-400">Stepantsminda & Beyond</p>
+    <div id="home-page" class="page min-h-screen pb-24">
+        <nav class="flex justify-between items-center px-6 pt-10 mb-8">
+            <div class="flex flex-col">
+                <span class="text-xs text-gray-500 uppercase tracking-widest">Delivering to</span>
+                <span class="text-lg font-bold">Stepantsminda, Kazbegi 📍</span>
             </div>
-            <div class="w-12 h-12 rounded-full border-2 border-orange-400 overflow-hidden">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User">
+            <div class="w-12 h-12 glass flex items-center justify-center border-white/10">
+                <span class="text-xl">🔔</span>
             </div>
-        </header>
+        </nav>
 
-        <div onclick="openMenu('panorama')" class="restaurant-card glass mb-6 overflow-hidden">
-            <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80" class="h-48 w-full object-cover opacity-80" alt="Panorama">
-            <div class="p-6">
-                <h3 class="text-2xl font-bold">Panorama Kazbegi</h3>
-                <p class="text-orange-400 text-sm mb-2 font-semibold">Georgian Classics • 4.9 ★</p>
-                <p class="text-gray-400 text-sm">Authentic khinkali with breathtaking mountain vibes.</p>
-            </div>
+        <div class="flex space-x-3 px-6 overflow-x-auto no-scrollbar mb-8">
+            <div class="category-chip active">All Food</div>
+            <div class="category-chip">Georgian</div>
+            <div class="category-chip">Burgers</div>
+            <div class="category-chip">Shaurma</div>
         </div>
 
-        <div onclick="openMenu('graf')" class="restaurant-card glass overflow-hidden">
-            <img src="https://images.unsplash.com/photo-1561758033-d89a9ad46330?auto=format&fit=crop&w=800&q=80" class="h-48 w-full object-cover opacity-80" alt="Shaurma">
-            <div class="p-6">
-                <h3 class="text-2xl font-bold">Graf Shaurma</h3>
-                <p class="text-orange-400 text-sm mb-2 font-semibold">Street Food • 4.7 ★</p>
-                <p class="text-gray-400 text-sm">Best combo in town. Fries, Cola, and the perfect Shaurma.</p>
+        <section class="px-6 space-y-8">
+            <div onclick="openMenu('panorama')" class="tap-scale glass overflow-hidden group">
+                <div class="relative h-56">
+                    <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=800" class="w-full h-full object-cover group-hover:scale-110 transition duration-700" alt="Restaurant">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+                    <div class="absolute bottom-4 left-4">
+                        <span class="bg-[#D4AF37] text-black text-[10px] font-bold px-2 py-1 rounded-md uppercase">Top Rated</span>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-2xl font-bold mb-1">Panorama Kazbegi</h3>
+                    <div class="flex items-center text-sm text-gray-400">
+                        <span class="text-[#D4AF37]">★★★★★</span>
+                        <span class="mx-2">•</span>
+                        <span>Premium Georgian Cuisine</span>
+                    </div>
+                </div>
             </div>
+
+            <div onclick="openMenu('graf')" class="tap-scale glass overflow-hidden group">
+                <div class="relative h-56">
+                    <img src="https://images.unsplash.com/photo-1529006557810-274b9b2fc78a?auto=format&fit=crop&w=800" class="w-full h-full object-cover group-hover:scale-110 transition duration-700" alt="Shaurma">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-2xl font-bold mb-1">Graf Shaurma</h3>
+                    <div class="flex items-center text-sm text-gray-400">
+                        <span class="text-[#D4AF37]">★★★★☆</span>
+                        <span class="mx-2">•</span>
+                        <span>The Street King • 15-20 min</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] glass py-4 px-10 flex justify-between items-center z-50">
+            <span class="text-2xl">🏠</span>
+            <div class="w-14 h-14 bg-[#D4AF37] rounded-full flex items-center justify-center -mt-12 border-[6px] border-[#0A0A0A] shadow-xl">
+                <span class="text-2xl">🛒</span>
+            </div>
+            <span class="text-2xl opacity-40">👤</span>
         </div>
     </div>
 
-    <div id="menu-page" class="page px-6 py-12">
-        <button onclick="navTo('home-page')" class="mb-6 text-orange-400 font-bold">← BACK</button>
-        <h2 id="menu-title" class="text-4xl font-extrabold mb-8 gold-text">Menu</h2>
+    <div id="menu-page" class="page px-6 pt-10 pb-24">
+        <button onclick="navTo('home-page')" class="w-12 h-12 glass flex items-center justify-center mb-8">←</button>
+        <h2 id="menu-title" class="text-5xl font-black mb-8 tracking-tighter gold-gradient">Menu</h2>
         <div id="menu-items" class="space-y-4">
             </div>
     </div>
@@ -72,19 +122,18 @@
     <script>
         const menus = {
             panorama: {
-                title: "Panorama Kazbegi",
+                title: "Panorama",
                 items: [
-                    { name: "Mountain Khinkali", desc: "Hand-rolled veal & pork dumplings", price: "12 GEL" },
-                    { name: "Ajaruli Khachapuri", desc: "Cheese boat with fresh butter and egg", price: "15 GEL" },
-                    { name: "Mtsvadi (Pork)", desc: "Grilled pork skewers with pomegranate", price: "18 GEL" }
+                    { name: "Royal Khinkali", desc: "10 pcs with hand-minced meat", price: "18 GEL", img: "🥟" },
+                    { name: "Truffle Khachapuri", desc: "Premium cheese blend & truffle oil", price: "24 GEL", img: "🧀" },
+                    { name: "Saperavi Wine", desc: "Old cellar limited edition", price: "45 GEL", img: "🍷" }
                 ]
             },
             graf: {
                 title: "Graf Shaurma",
                 items: [
-                    { name: "The OG Combo", desc: "Large Shaurma + Fries + Coca-Cola", price: "19 GEL" },
-                    { name: "Cheese Bomb", desc: "Shaurma with triple mozzarella melt", price: "16 GEL" },
-                    { name: "Spicy Graf", desc: "Shaurma with secret hot adjika sauce", price: "14 GEL" }
+                    { name: "The Emperor Combo", desc: "Maxi Shaurma, Gold Fries, 0.5L Drink", price: "22 GEL", img: "🌯" },
+                    { name: "Cheese Blast", desc: "Double cheese, no cabbage, pure meat", price: "17 GEL", img: "🔥" }
                 ]
             }
         };
@@ -92,7 +141,7 @@
         function navTo(pageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(pageId).classList.add('active');
-            window.scrollTo(0, 0);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function openMenu(resId) {
@@ -100,12 +149,15 @@
             document.getElementById('menu-title').innerText = res.title;
             const container = document.getElementById('menu-items');
             container.innerHTML = res.items.map(i => `
-                <div class="glass p-5 flex justify-between items-center">
-                    <div>
-                        <h4 class="font-bold text-lg">${i.name}</h4>
-                        <p class="text-gray-400 text-xs">${i.desc}</p>
+                <div class="glass p-6 flex justify-between items-center group active:bg-white/5 transition">
+                    <div class="flex items-center">
+                        <div class="text-3xl mr-4">${i.img}</div>
+                        <div>
+                            <h4 class="font-bold text-lg">${i.name}</h4>
+                            <p class="text-gray-500 text-xs">${i.desc}</p>
+                        </div>
                     </div>
-                    <div class="text-orange-400 font-bold">${i.price}</div>
+                    <div class="text-[#D4AF37] font-black">${i.price}</div>
                 </div>
             `).join('');
             navTo('menu-page');
