@@ -3,215 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KaDelivery Ultra</title>
+    <title>KaDelivery Elite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --brand: #FFD700; --bg: #050505; --card: #121212; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: white; margin: 0; overflow-x: hidden; }
+        :root { --brand: #FFD700; --bg: #050505; --card: #121212; --nav: rgba(18, 18, 18, 0.8); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: white; margin: 0; -webkit-tap-highlight-color: transparent; }
         
-        /* Smooth UI Logic */
-        .page { display: none; min-height: 100vh; animation: fadeIn 0.4s ease forwards; }
-        .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        .page { display: none; min-height: 100vh; opacity: 0; transform: scale(0.96); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .page.active { display: block; opacity: 1; transform: scale(1); }
 
-        /* Modal / Cart Overlay */
-        #cart-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); display: none; z-index: 100; opacity: 0; transition: 0.3s; }
-        #cart-sheet { position: fixed; bottom: 0; left: 0; right: 0; background: #111; border-top: 1px solid #333; border-radius: 32px 32px 0 0; transform: translateY(100%); transition: 0.4s cubic-bezier(0.32, 0.72, 0, 1); z-index: 101; max-height: 85vh; overflow-y: auto; }
+        /* Floating Nav Bar (Dribbble Style) */
+        #main-nav { 
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(150%);
+            width: 90%; max-width: 400px; background: var(--nav); backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 40px; padding: 12px 20px;
+            display: flex; justify-content: space-between; align-items: center; z-index: 1000;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #main-nav.show { transform: translateX(-50%) translateY(0); }
         
+        .nav-item { position: relative; padding: 10px; border-radius: 50%; transition: 0.3s; }
+        .nav-item.active-pill { background: var(--brand); color: black; border-radius: 25px; padding: 10px 20px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .nav-text { display: none; font-size: 12px; }
+        .nav-item.active-pill .nav-text { display: block; }
+
+        /* Restaurant Cards */
+        .res-card { background: var(--card); border-radius: 32px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* Modal Overlay */
+        #cart-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: none; z-index: 2000; opacity: 0; transition: 0.3s; }
         .active-overlay { display: block !important; opacity: 1 !important; }
-        .active-sheet { transform: translateY(0) !important; }
-
-        /* Modern Elements */
-        .btn-brand { background: var(--brand); color: black; font-weight: 800; border-radius: 20px; transition: 0.2s; }
-        .btn-brand:active { transform: scale(0.96); opacity: 0.9; }
-        .glass-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; }
-        
-        /* Progress Bar Animation */
-        .progress-fill { width: 0%; height: 100%; background: var(--brand); transition: width 2s ease-in-out; }
     </style>
 </head>
 <body>
 
-    <div id="login-page" class="page active flex flex-col items-center justify-center px-8">
-        <div class="w-24 h-24 bg-[#FFD700] rounded-[32px] flex items-center justify-center mb-8 shadow-2xl shadow-yellow-500/20">
+    <div id="login-page" class="page active flex flex-col items-center justify-center px-10">
+        <div class="w-20 h-20 bg-[#FFD700] rounded-[28px] flex items-center justify-center mb-6 shadow-2xl shadow-yellow-500/20">
             <span class="text-black text-4xl font-black italic">Ka</span>
         </div>
-        <h1 class="text-4xl font-extrabold mb-2 tracking-tight">Welcome Back</h1>
-        <p class="text-gray-500 mb-10">Enter phone to start tasting Kazbegi</p>
-        <div class="w-full space-y-4">
-            <input type="tel" placeholder="+995 5-- -- -- --" class="w-full bg-[#111] border border-white/10 rounded-2xl p-5 text-xl outline-none focus:border-[#FFD700] transition">
-            <button onclick="navTo('home-page')" class="btn-brand w-full py-5 text-lg">CONTINUE</button>
+        <h1 class="text-3xl font-extrabold mb-8">Premium Delivery</h1>
+        <input type="tel" placeholder="+995" class="w-full bg-[#111] rounded-2xl p-5 mb-4 outline-none border border-white/5">
+        <button onclick="login()" class="w-full py-5 bg-[#FFD700] text-black font-black rounded-2xl shadow-xl active:scale-95 transition">ENTER THE KITCHEN</button>
+    </div>
+
+    <div id="home-page" class="page pb-32 pt-14 px-6">
+        <div class="flex justify-between items-center mb-8">
+            <div><p class="text-gray-500 text-xs font-bold uppercase">Welcome to</p><h2 class="text-2xl font-black">Stepantsminda 🇬🇪</h2></div>
+            <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">🔔</div>
+        </div>
+
+        <div class="flex space-x-3 overflow-x-auto no-scrollbar mb-8">
+            <button class="px-6 py-3 bg-[#FFD700] text-black rounded-full font-bold">All</button>
+            <button class="px-6 py-3 bg-white/5 rounded-full font-medium">Grocery</button>
+            <button class="px-6 py-3 bg-white/5 rounded-full font-medium">Georgian</button>
+        </div>
+
+        <div id="restaurant-list" class="space-y-6">
+            </div>
+    </div>
+
+    <div id="search-page" class="page pt-14 px-6">
+        <h2 class="text-3xl font-black mb-6">Search</h2>
+        <input type="text" placeholder="Search for Khinkali..." class="w-full bg-white/5 rounded-2xl p-5 outline-none border border-white/10 mb-8">
+        <div class="grid grid-cols-2 gap-4">
+            <div class="h-32 bg-white/5 rounded-3xl flex items-center justify-center font-bold">Fast Food</div>
+            <div class="h-32 bg-white/5 rounded-3xl flex items-center justify-center font-bold">Wine Shop</div>
         </div>
     </div>
 
-    <div id="home-page" class="page">
-        <header class="px-6 pt-14 pb-4 bg-black/50 backdrop-blur-md sticky top-0 z-40">
-            <div class="flex justify-between items-center">
-                <div onclick="requestLocation()">
-                    <p class="text-[10px] uppercase tracking-widest text-[#FFD700] font-bold">Delivery Location</p>
-                    <h2 id="loc-text" class="text-lg font-bold">Tap to find me 📍</h2>
-                </div>
-                <div class="w-12 h-12 glass-card flex items-center justify-center">🔍</div>
-            </div>
-        </header>
-
-        <div class="px-6 py-6 space-y-8">
-            <h3 class="text-3xl font-black tracking-tighter">Best in Stepantsminda</h3>
-            
-            <div onclick="openMenu('panorama')" class="glass-card overflow-hidden active:scale-95 transition duration-300">
-                <div class="h-52 relative">
-                    <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800" class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
-                    <div class="absolute bottom-4 left-4 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold">★ 4.9 • 25m</div>
-                </div>
-                <div class="p-6">
-                    <h4 class="text-2xl font-bold">Panorama Kazbegi</h4>
-                    <p class="text-gray-400 text-sm">Fine Georgian Dining • High Quality</p>
-                </div>
-            </div>
-
-            <div onclick="openMenu('graf')" class="glass-card overflow-hidden active:scale-95 transition duration-300">
-                <div class="h-52 relative">
-                    <img src="https://images.unsplash.com/photo-1561758033-d89a9ad46330?auto=format&fit=crop&w=800" class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
-                    <div class="absolute bottom-4 left-4 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold">★ 4.7 • 15m</div>
-                </div>
-                <div class="p-6">
-                    <h4 class="text-2xl font-bold">Graf Shaurma</h4>
-                    <p class="text-gray-400 text-sm">Street Food • Fast Delivery</p>
-                </div>
-            </div>
+    <div id="orders-page" class="page pt-14 px-6">
+        <h2 class="text-3xl font-black mb-8">Active Orders</h2>
+        <div class="res-card p-6 border-l-4 border-yellow-500">
+            <div class="flex justify-between mb-4"><div><h4 class="font-bold">Graf Shaurma</h4><p class="text-xs text-gray-500">Processing...</p></div><span class="text-yellow-500">22 GEL</span></div>
+            <div class="h-1 bg-white/5 rounded-full overflow-hidden"><div class="h-full bg-yellow-500 w-1/3"></div></div>
         </div>
     </div>
 
     <div id="menu-page" class="page pb-32">
-        <div class="h-64 relative">
-            <img id="menu-img" class="w-full h-full object-cover">
-            <button onclick="navTo('home-page')" class="absolute top-14 left-6 w-12 h-12 bg-black/40 backdrop-blur-xl rounded-full flex items-center justify-center">←</button>
+        <div id="menu-hero" class="h-64 relative bg-cover bg-center">
+            <button onclick="navTo('home-page')" class="absolute top-12 left-6 w-12 h-12 bg-black/40 backdrop-blur-xl rounded-full flex items-center justify-center">←</button>
         </div>
-        <div class="px-6 -mt-10 relative z-10 bg-[#050505] rounded-t-[40px] pt-8">
-            <h2 id="menu-title" class="text-4xl font-black mb-6">Menu</h2>
-            <div id="menu-list" class="space-y-4"></div>
+        <div class="px-6 -mt-10 bg-[#050505] rounded-t-[40px] pt-8 min-h-screen">
+            <h2 id="menu-title" class="text-3xl font-black mb-6"></h2>
+            <div id="menu-items-container" class="space-y-4"></div>
         </div>
     </div>
 
-    <div id="track-page" class="page flex flex-col px-8 pt-20">
-        <h2 class="text-4xl font-black mb-2">Order Tracking</h2>
-        <p class="text-gray-500 mb-10">Driver is picking up your food...</p>
-        
-        <div class="glass-card p-8 space-y-8">
-            <div class="flex items-center space-x-6">
-                <div class="text-4xl">🍳</div>
-                <div class="flex-1">
-                    <p class="font-bold">Preparing Meal</p>
-                    <div class="h-2 bg-white/5 rounded-full mt-2 overflow-hidden"><div id="p-bar" class="progress-fill"></div></div>
-                </div>
-            </div>
-            <div class="flex items-center space-x-6 opacity-40">
-                <div class="text-4xl">🚴</div>
-                <div class="flex-1 font-bold">On the Way</div>
-            </div>
-        </div>
-        <button onclick="navTo('home-page')" class="mt-auto mb-12 w-full py-5 glass-card font-bold">BACK HOME</button>
-    </div>
-
-    <div id="cart-bar" class="fixed bottom-0 left-0 right-0 p-6 z-50 transition-all translate-y-full">
-        <button onclick="toggleCart(true)" class="btn-brand w-full h-16 flex justify-between items-center px-8 shadow-2xl">
-            <span class="tracking-widest">ORDER NOW</span>
-            <span id="cart-total" class="font-black">0.00 GEL</span>
-        </button>
-    </div>
-
-    <div id="cart-overlay" onclick="toggleCart(false)"></div>
-    <div id="cart-sheet">
-        <div class="p-10">
-            <div class="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-10"></div>
-            <h3 class="text-3xl font-black mb-8">Checkout</h3>
-            <div id="cart-items" class="space-y-4 mb-10"></div>
-            
-            <div class="space-y-3 py-6 border-t border-white/5">
-                <div class="flex justify-between text-gray-500 text-sm"><span>Distance</span><span id="dist-val">Calculating...</span></div>
-                <div class="flex justify-between text-gray-500 text-sm"><span>Delivery Fee</span><span id="fee-val">0.00 GEL</span></div>
-                <div class="flex justify-between text-2xl font-black"><span>Total</span><span id="final-total">0.00 GEL</span></div>
-            </div>
-
-            <button id="pay-btn" onclick="startPayment()" class="btn-brand w-full py-6 mt-6 text-xl">PAY WITH CARD</button>
-        </div>
-    </div>
+    <nav id="main-nav">
+        <div class="nav-item active-pill" onclick="navTo('home-page', this)"><span>🏠</span><span class="nav-text">Home</span></div>
+        <div class="nav-item" onclick="navTo('search-page', this)"><span>🔍</span><span class="nav-text">Search</span></div>
+        <div class="nav-item" onclick="navTo('orders-page', this)"><span>📦</span><span class="nav-text">Orders</span></div>
+        <div class="nav-item" onclick="navTo('login-page', this)"><span>👤</span><span class="nav-text">Profile</span></div>
+    </nav>
 
     <script>
-        let cart = [];
-        let userLoc = null;
-        const restaurants = {
-            panorama: { title: "Panorama", lat: 42.66, lng: 44.64, img: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800", items: [{id:'p1', n:"Royal Khinkali", p: 18}, {id:'p2', n:"Ajaruli", p:22}] },
-            graf: { title: "Graf Shaurma", lat: 42.65, lng: 44.63, img: "https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=800", items: [{id:'g1', n:"Maxi Shaurma", p: 16}, {id:'g2', n:"Graf Combo", p:24}] }
+        const data = {
+            graf: { name: "Graf Shaurma", cat: "Fast Food", img: "https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=800", menu: [{n:"Maxi Shaurma", p:16}, {n:"Hot Dog XXL", p:10}, {n:"Cold Coca-Cola", p:4}] },
+            panorama: { name: "Panorama", cat: "Georgian", img: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800", menu: [{n:"Royal Khinkali", p:18}, {n:"Kupati", p:20}] },
+            teravino: { name: "Teravino", cat: "Wine & Dine", img: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=800", menu: [{n:"Saperavi", p:40}, {n:"Wine Tasting Platter", p:35}] },
+            ska: { name: "Ska Market", cat: "Grocery", img: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=800", menu: [{n:"Milk", p:5}, {n:"Fresh Bread", p:2}, {n:"Local Cheese", p:12}] }
         };
-        let activeRes = null;
 
-        function navTo(id) {
+        function login() {
+            navTo('home-page');
+            document.getElementById('main-nav').classList.add('show');
+        }
+
+        function navTo(id, el) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(id).classList.add('active');
+            
+            if(el) {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active-pill'));
+                el.classList.add('active-pill');
+            }
+            if(id === 'login-page') document.getElementById('main-nav').classList.remove('show');
             window.scrollTo(0,0);
         }
 
-        function requestLocation() {
-            document.getElementById('loc-text').innerText = "Locating...";
-            navigator.geolocation.getCurrentPosition(pos => {
-                userLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                document.getElementById('loc-text').innerText = "Found you! 📍";
-            });
+        function renderHome() {
+            const container = document.getElementById('restaurant-list');
+            container.innerHTML = Object.entries(data).map(([key, val]) => `
+                <div class="res-card active:scale-95 transition" onclick="openMenu('${key}')">
+                    <img src="${val.img}" class="h-48 w-full object-cover opacity-80">
+                    <div class="p-6">
+                        <h4 class="text-xl font-black">${val.name}</h4>
+                        <p class="text-gray-500 text-sm">${val.cat} • ★ 4.8</p>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        function openMenu(id) {
-            activeRes = restaurants[id];
-            document.getElementById('menu-title').innerText = activeRes.title;
-            document.getElementById('menu-img').src = activeRes.img;
-            document.getElementById('menu-list').innerHTML = activeRes.items.map(i => `
-                <div class="glass-card p-6 flex justify-between items-center">
-                    <div><h4 class="font-bold">${i.n}</h4><p class="text-[#FFD700] font-black mt-1">${i.p}.00 GEL</p></div>
-                    <button onclick="addToCart('${i.id}','${i.n}',${i.p})" class="w-12 h-12 bg-white/5 rounded-2xl font-bold text-xl">+</button>
+        function openMenu(key) {
+            const res = data[key];
+            document.getElementById('menu-hero').style.backgroundImage = `url('${res.img}')`;
+            document.getElementById('menu-title').innerText = res.name;
+            document.getElementById('menu-items-container').innerHTML = res.menu.map(item => `
+                <div class="res-card p-5 flex justify-between items-center">
+                    <div><p class="font-bold">${item.n}</p><p class="text-[#FFD700] font-black">${item.p} GEL</p></div>
+                    <button class="w-10 h-10 bg-white/10 rounded-xl">+</button>
                 </div>
             `).join('');
             navTo('menu-page');
         }
 
-        function addToCart(id, n, p) {
-            cart.push({id, n, p});
-            document.getElementById('cart-bar').classList.remove('translate-y-full');
-            updateUI();
-        }
-
-        function updateUI() {
-            const total = cart.reduce((s, i) => s + i.p, 0);
-            document.getElementById('cart-total').innerText = total.toFixed(2) + ' GEL';
-            document.getElementById('final-total').innerText = (total + 5).toFixed(2) + ' GEL'; // +5 GEL delivery
-            document.getElementById('fee-val').innerText = '5.00 GEL';
-            document.getElementById('dist-val').innerText = userLoc ? '2.4 km' : 'Login GPS';
-            
-            document.getElementById('cart-items').innerHTML = cart.map(i => `
-                <div class="flex justify-between font-bold"><span>${i.n}</span><span>${i.p}.00</span></div>
-            `).join('');
-        }
-
-        function toggleCart(show) {
-            const over = document.getElementById('cart-overlay');
-            const sheet = document.getElementById('cart-sheet');
-            if(show) { over.classList.add('active-overlay'); sheet.classList.add('active-sheet'); }
-            else { over.classList.remove('active-overlay'); sheet.classList.remove('active-sheet'); }
-        }
-
-        function startPayment() {
-            const btn = document.getElementById('pay-btn');
-            btn.innerText = "PROCESSING...";
-            btn.disabled = true;
-            setTimeout(() => {
-                alert("Payment Successful! 💳");
-                toggleCart(false);
-                navTo('track-page');
-                setTimeout(() => document.getElementById('p-bar').style.width = "100%", 500);
-            }, 2500);
-        }
+        renderHome();
     </script>
 </body>
 </html>
