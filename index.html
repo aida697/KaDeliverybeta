@@ -3,225 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KaDelivery PRO</title>
+    <title>KaDelivery Ultra</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --accent: #FFD700; --bg: #000000; --surface: #121212; --text-dim: #A0A0A0; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: white; margin: 0; -webkit-font-smoothing: antialiased; }
+        :root { --brand: #FFD700; --bg: #050505; --card: #121212; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: white; margin: 0; overflow-x: hidden; }
         
-        /* Smooth Page Transitions */
-        .page { display: none; opacity: 0; transform: translateY(15px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .page.active { display: block; opacity: 1; transform: translateY(0); }
+        /* Smooth UI Logic */
+        .page { display: none; min-height: 100vh; animation: fadeIn 0.4s ease forwards; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
 
-        /* Modern Components */
-        .card-shadow { box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
-        .img-gradient { background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 60%); }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
+        /* Modal / Cart Overlay */
+        #cart-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); display: none; z-index: 100; opacity: 0; transition: 0.3s; }
+        #cart-sheet { position: fixed; bottom: 0; left: 0; right: 0; background: #111; border-top: 1px solid #333; border-radius: 32px 32px 0 0; transform: translateY(100%); transition: 0.4s cubic-bezier(0.32, 0.72, 0, 1); z-index: 101; max-height: 85vh; overflow-y: auto; }
         
-        /* Cart Badge Pulse */
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        .cart-update { animation: pulse 0.3s ease-in-out; }
+        .active-overlay { display: block !important; opacity: 1 !important; }
+        .active-sheet { transform: translateY(0) !important; }
 
-        /* Bottom Sheet */
-        #cart-sheet { transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1); z-index: 100; }
-        #cart-sheet.open { transform: translateY(0); }
+        /* Modern Elements */
+        .btn-brand { background: var(--brand); color: black; font-weight: 800; border-radius: 20px; transition: 0.2s; }
+        .btn-brand:active { transform: scale(0.96); opacity: 0.9; }
+        .glass-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; }
+        
+        /* Progress Bar Animation */
+        .progress-fill { width: 0%; height: 100%; background: var(--brand); transition: width 2s ease-in-out; }
     </style>
 </head>
 <body>
 
-    <div id="login-page" class="page active flex flex-col items-center justify-center min-h-screen px-8">
-        <div class="w-20 h-20 bg-[#FFD700] rounded-3xl flex items-center justify-center mb-6 rotate-12">
-            <span class="text-black text-4xl font-black -rotate-12 uppercase">Ka</span>
+    <div id="login-page" class="page active flex flex-col items-center justify-center px-8">
+        <div class="w-24 h-24 bg-[#FFD700] rounded-[32px] flex items-center justify-center mb-8 shadow-2xl shadow-yellow-500/20">
+            <span class="text-black text-4xl font-black italic">Ka</span>
         </div>
-        <h1 class="text-4xl font-bold tracking-tight mb-2">KaDelivery</h1>
-        <p class="text-gray-500 mb-10 text-center">Premium food delivery from the heart of Kazbegi.</p>
-        
+        <h1 class="text-4xl font-extrabold mb-2 tracking-tight">Welcome Back</h1>
+        <p class="text-gray-500 mb-10">Enter phone to start tasting Kazbegi</p>
         <div class="w-full space-y-4">
-            <input type="text" placeholder="Phone Number" class="w-full bg-[#1A1A1A] border-none rounded-2xl p-5 outline-none focus:ring-2 focus:ring-[#FFD700]">
-            <button onclick="navTo('home-page')" class="w-full py-5 bg-[#FFD700] text-black font-bold rounded-2xl active:scale-95 transition">Get Started</button>
+            <input type="tel" placeholder="+995 5-- -- -- --" class="w-full bg-[#111] border border-white/10 rounded-2xl p-5 text-xl outline-none focus:border-[#FFD700] transition">
+            <button onclick="navTo('home-page')" class="btn-brand w-full py-5 text-lg">CONTINUE</button>
         </div>
     </div>
 
-    <div id="home-page" class="page min-h-screen pb-32">
-        <header class="px-6 pt-12 mb-6 flex justify-between items-end">
-            <div>
-                <h2 class="text-xs font-bold text-[#FFD700] uppercase tracking-widest mb-1">Current Location</h2>
-                <h3 class="text-xl font-semibold">Stepantsminda, Kazbegi ▾</h3>
+    <div id="home-page" class="page">
+        <header class="px-6 pt-14 pb-4 bg-black/50 backdrop-blur-md sticky top-0 z-40">
+            <div class="flex justify-between items-center">
+                <div onclick="requestLocation()">
+                    <p class="text-[10px] uppercase tracking-widest text-[#FFD700] font-bold">Delivery Location</p>
+                    <h2 id="loc-text" class="text-lg font-bold">Tap to find me 📍</h2>
+                </div>
+                <div class="w-12 h-12 glass-card flex items-center justify-center">🔍</div>
             </div>
-            <div class="w-12 h-12 bg-[#1A1A1A] rounded-full flex items-center justify-center">🔍</div>
         </header>
 
-        <div class="flex space-x-3 px-6 overflow-x-auto no-scrollbar mb-8">
-            <button class="px-6 py-3 bg-[#FFD700] text-black rounded-full font-bold whitespace-nowrap">All</button>
-            <button class="px-6 py-3 bg-[#1A1A1A] rounded-full font-medium whitespace-nowrap">Georgian</button>
-            <button class="px-6 py-3 bg-[#1A1A1A] rounded-full font-medium whitespace-nowrap">Burgers</button>
-            <button class="px-6 py-3 bg-[#1A1A1A] rounded-full font-medium whitespace-nowrap">Shaurma</button>
-        </div>
-
-        <div class="px-6 space-y-8">
-            <h4 class="text-2xl font-bold">Featured Restaurants</h4>
+        <div class="px-6 py-6 space-y-8">
+            <h3 class="text-3xl font-black tracking-tighter">Best in Stepantsminda</h3>
             
-            <div onclick="openMenu('panorama')" class="relative rounded-[32px] overflow-hidden card-shadow active:scale-[0.98] transition">
-                <div class="h-64 w-full relative">
+            <div onclick="openMenu('panorama')" class="glass-card overflow-hidden active:scale-95 transition duration-300">
+                <div class="h-52 relative">
                     <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800" class="w-full h-full object-cover">
-                    <div class="absolute inset-0 img-gradient"></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
+                    <div class="absolute bottom-4 left-4 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold">★ 4.9 • 25m</div>
                 </div>
-                <div class="absolute bottom-6 left-6 right-6">
-                    <div class="flex justify-between items-end">
-                        <div>
-                            <h5 class="text-2xl font-bold">Panorama Kazbegi</h5>
-                            <p class="text-sm text-gray-300">Modern Georgian • 25-35 min</p>
-                        </div>
-                        <div class="bg-white/10 backdrop-blur-md px-3 py-1 rounded-lg text-sm font-bold">★ 4.9</div>
-                    </div>
+                <div class="p-6">
+                    <h4 class="text-2xl font-bold">Panorama Kazbegi</h4>
+                    <p class="text-gray-400 text-sm">Fine Georgian Dining • High Quality</p>
                 </div>
             </div>
 
-            <div onclick="openMenu('graf')" class="relative rounded-[32px] overflow-hidden card-shadow active:scale-[0.98] transition">
-                <div class="h-64 w-full relative">
+            <div onclick="openMenu('graf')" class="glass-card overflow-hidden active:scale-95 transition duration-300">
+                <div class="h-52 relative">
                     <img src="https://images.unsplash.com/photo-1561758033-d89a9ad46330?auto=format&fit=crop&w=800" class="w-full h-full object-cover">
-                    <div class="absolute inset-0 img-gradient"></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
+                    <div class="absolute bottom-4 left-4 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold">★ 4.7 • 15m</div>
                 </div>
-                <div class="absolute bottom-6 left-6 right-6">
-                    <div class="flex justify-between items-end">
-                        <div>
-                            <h5 class="text-2xl font-bold">Graf Shaurma</h5>
-                            <p class="text-sm text-gray-300">Fast Food • 15-25 min</p>
-                        </div>
-                        <div class="bg-white/10 backdrop-blur-md px-3 py-1 rounded-lg text-sm font-bold">★ 4.7</div>
-                    </div>
+                <div class="p-6">
+                    <h4 class="text-2xl font-bold">Graf Shaurma</h4>
+                    <p class="text-gray-400 text-sm">Street Food • Fast Delivery</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="menu-page" class="page min-h-screen pb-40">
-        <div class="relative h-72">
-            <img id="menu-header-img" class="w-full h-full object-cover">
-            <div class="absolute inset-0 bg-black/40"></div>
-            <button onclick="navTo('home-page')" class="absolute top-12 left-6 w-12 h-12 bg-black/50 backdrop-blur-lg rounded-full flex items-center justify-center">←</button>
+    <div id="menu-page" class="page pb-32">
+        <div class="h-64 relative">
+            <img id="menu-img" class="w-full h-full object-cover">
+            <button onclick="navTo('home-page')" class="absolute top-14 left-6 w-12 h-12 bg-black/40 backdrop-blur-xl rounded-full flex items-center justify-center">←</button>
         </div>
+        <div class="px-6 -mt-10 relative z-10 bg-[#050505] rounded-t-[40px] pt-8">
+            <h2 id="menu-title" class="text-4xl font-black mb-6">Menu</h2>
+            <div id="menu-list" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <div id="track-page" class="page flex flex-col px-8 pt-20">
+        <h2 class="text-4xl font-black mb-2">Order Tracking</h2>
+        <p class="text-gray-500 mb-10">Driver is picking up your food...</p>
         
-        <div class="px-6 -mt-12 relative z-10">
-            <div class="bg-[#121212] rounded-t-[40px] p-8">
-                <h2 id="menu-title" class="text-3xl font-black mb-2">Restaurant</h2>
-                <div class="flex items-center space-x-4 text-sm text-gray-400 mb-8">
-                    <span>Free Delivery</span>
-                    <span>•</span>
-                    <span>30 min</span>
+        <div class="glass-card p-8 space-y-8">
+            <div class="flex items-center space-x-6">
+                <div class="text-4xl">🍳</div>
+                <div class="flex-1">
+                    <p class="font-bold">Preparing Meal</p>
+                    <div class="h-2 bg-white/5 rounded-full mt-2 overflow-hidden"><div id="p-bar" class="progress-fill"></div></div>
                 </div>
-
-                <div id="menu-items" class="space-y-6">
-                    </div>
+            </div>
+            <div class="flex items-center space-x-6 opacity-40">
+                <div class="text-4xl">🚴</div>
+                <div class="flex-1 font-bold">On the Way</div>
             </div>
         </div>
+        <button onclick="navTo('home-page')" class="mt-auto mb-12 w-full py-5 glass-card font-bold">BACK HOME</button>
     </div>
 
-    <div id="cart-bar" class="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black to-transparent z-50 transition-all">
-        <button onclick="toggleCart()" class="w-full bg-[#FFD700] text-black h-16 rounded-2xl flex items-center justify-between px-8 shadow-2xl active:scale-95 transition">
-            <span class="font-bold uppercase tracking-widest">View Cart</span>
-            <div class="flex items-center space-x-3">
-                <span id="cart-count" class="bg-black text-white px-2 py-0.5 rounded-md text-xs">0</span>
-                <span id="cart-total" class="font-black">0.00 GEL</span>
-            </div>
+    <div id="cart-bar" class="fixed bottom-0 left-0 right-0 p-6 z-50 transition-all translate-y-full">
+        <button onclick="toggleCart(true)" class="btn-brand w-full h-16 flex justify-between items-center px-8 shadow-2xl">
+            <span class="tracking-widest">ORDER NOW</span>
+            <span id="cart-total" class="font-black">0.00 GEL</span>
         </button>
     </div>
 
-    <div id="cart-sheet" class="fixed inset-x-0 bottom-0 bg-[#121212] rounded-t-[40px] p-8 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] max-h-[80vh] overflow-y-auto">
-        <div class="w-12 h-1.5 bg-gray-800 rounded-full mx-auto mb-8" onclick="toggleCart()"></div>
-        <h3 class="text-2xl font-bold mb-6">Your Order</h3>
-        <div id="cart-list" class="space-y-4 mb-8">
+    <div id="cart-overlay" onclick="toggleCart(false)"></div>
+    <div id="cart-sheet">
+        <div class="p-10">
+            <div class="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-10"></div>
+            <h3 class="text-3xl font-black mb-8">Checkout</h3>
+            <div id="cart-items" class="space-y-4 mb-10"></div>
+            
+            <div class="space-y-3 py-6 border-t border-white/5">
+                <div class="flex justify-between text-gray-500 text-sm"><span>Distance</span><span id="dist-val">Calculating...</span></div>
+                <div class="flex justify-between text-gray-500 text-sm"><span>Delivery Fee</span><span id="fee-val">0.00 GEL</span></div>
+                <div class="flex justify-between text-2xl font-black"><span>Total</span><span id="final-total">0.00 GEL</span></div>
             </div>
-        <div class="border-t border-gray-800 pt-6 space-y-3">
-            <div class="flex justify-between text-gray-400"><span>Delivery Fee</span><span>FREE</span></div>
-            <div class="flex justify-between text-2xl font-bold"><span>Total</span><span id="sheet-total">0.00 GEL</span></div>
+
+            <button id="pay-btn" onclick="startPayment()" class="btn-brand w-full py-6 mt-6 text-xl">PAY WITH CARD</button>
         </div>
-        <button onclick="alert('Order Sent to Restaurant!')" class="w-full py-5 bg-[#FFD700] text-black font-bold rounded-2xl mt-8">Confirm Order</button>
     </div>
 
     <script>
         let cart = [];
-        const menuData = {
-            panorama: {
-                title: "Panorama Kazbegi",
-                img: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800",
-                items: [
-                    { id: 'p1', name: "Ajaruli Khachapuri", price: 18.00, desc: "Premium cheese, organic egg" },
-                    { id: 'p2', name: "Mountain Khinkali (5pcs)", price: 12.50, desc: "Traditional beef & pork" },
-                    { id: 'p3', name: "Saperavi Bottle", price: 45.00, desc: "Local dry red wine" }
-                ]
-            },
-            graf: {
-                title: "Graf Shaurma",
-                img: "https://images.unsplash.com/photo-1561758033-d89a9ad46330?auto=format&fit=crop&w=800",
-                items: [
-                    { id: 'g1', name: "The Graf Classic", price: 15.00, desc: "Signature meat, fries inside" },
-                    { id: 'g2', name: "Emperor Combo", price: 22.00, desc: "Large shaurma + fries + cola" }
-                ]
-            }
+        let userLoc = null;
+        const restaurants = {
+            panorama: { title: "Panorama", lat: 42.66, lng: 44.64, img: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800", items: [{id:'p1', n:"Royal Khinkali", p: 18}, {id:'p2', n:"Ajaruli", p:22}] },
+            graf: { title: "Graf Shaurma", lat: 42.65, lng: 44.63, img: "https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=800", items: [{id:'g1', n:"Maxi Shaurma", p: 16}, {id:'g2', n:"Graf Combo", p:24}] }
         };
+        let activeRes = null;
 
-        function navTo(pageId) {
+        function navTo(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            const target = document.getElementById(pageId);
-            target.style.display = 'block';
-            setTimeout(() => target.classList.add('active'), 50);
+            document.getElementById(id).classList.add('active');
             window.scrollTo(0,0);
         }
 
-        function openMenu(resId) {
-            const res = menuData[resId];
-            document.getElementById('menu-title').innerText = res.title;
-            document.getElementById('menu-header-img').src = res.img;
-            
-            const container = document.getElementById('menu-items');
-            container.innerHTML = res.items.map(item => `
-                <div class="flex justify-between items-center py-4 border-b border-gray-900">
-                    <div class="flex-1 pr-4">
-                        <h4 class="font-bold text-lg mb-1">${item.name}</h4>
-                        <p class="text-xs text-gray-500">${item.desc}</p>
-                        <span class="text-[#FFD700] font-bold block mt-2">${item.price.toFixed(2)} GEL</span>
-                    </div>
-                    <button onclick="addToCart('${item.id}', '${item.name}', ${item.price})" class="w-12 h-12 bg-[#1A1A1A] rounded-2xl flex items-center justify-center font-bold text-xl">+</button>
+        function requestLocation() {
+            document.getElementById('loc-text').innerText = "Locating...";
+            navigator.geolocation.getCurrentPosition(pos => {
+                userLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                document.getElementById('loc-text').innerText = "Found you! 📍";
+            });
+        }
+
+        function openMenu(id) {
+            activeRes = restaurants[id];
+            document.getElementById('menu-title').innerText = activeRes.title;
+            document.getElementById('menu-img').src = activeRes.img;
+            document.getElementById('menu-list').innerHTML = activeRes.items.map(i => `
+                <div class="glass-card p-6 flex justify-between items-center">
+                    <div><h4 class="font-bold">${i.n}</h4><p class="text-[#FFD700] font-black mt-1">${i.p}.00 GEL</p></div>
+                    <button onclick="addToCart('${i.id}','${i.n}',${i.p})" class="w-12 h-12 bg-white/5 rounded-2xl font-bold text-xl">+</button>
                 </div>
             `).join('');
             navTo('menu-page');
         }
 
-        function addToCart(id, name, price) {
-            const existing = cart.find(i => i.id === id);
-            if (existing) { existing.qty++; } else { cart.push({id, name, price, qty: 1}); }
-            updateCartUI();
+        function addToCart(id, n, p) {
+            cart.push({id, n, p});
+            document.getElementById('cart-bar').classList.remove('translate-y-full');
+            updateUI();
         }
 
-        function updateCartUI() {
-            const count = cart.reduce((sum, item) => sum + item.qty, 0);
-            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-            
-            document.getElementById('cart-count').innerText = count;
+        function updateUI() {
+            const total = cart.reduce((s, i) => s + i.p, 0);
             document.getElementById('cart-total').innerText = total.toFixed(2) + ' GEL';
-            document.getElementById('sheet-total').innerText = total.toFixed(2) + ' GEL';
+            document.getElementById('final-total').innerText = (total + 5).toFixed(2) + ' GEL'; // +5 GEL delivery
+            document.getElementById('fee-val').innerText = '5.00 GEL';
+            document.getElementById('dist-val').innerText = userLoc ? '2.4 km' : 'Login GPS';
             
-            const cartList = document.getElementById('cart-list');
-            cartList.innerHTML = cart.map(item => `
-                <div class="flex justify-between items-center bg-[#1A1A1A] p-4 rounded-2xl">
-                    <div>
-                        <p class="font-bold">${item.name}</p>
-                        <p class="text-xs text-gray-500">${item.qty}x ${item.price.toFixed(2)}</p>
-                    </div>
-                    <div class="font-bold">${(item.price * item.qty).toFixed(2)}</div>
-                </div>
+            document.getElementById('cart-items').innerHTML = cart.map(i => `
+                <div class="flex justify-between font-bold"><span>${i.n}</span><span>${i.p}.00</span></div>
             `).join('');
-
-            // Pulse animation
-            const bar = document.getElementById('cart-bar');
-            bar.classList.add('cart-update');
-            setTimeout(() => bar.classList.remove('cart-update'), 300);
         }
 
-        function toggleCart() {
-            document.getElementById('cart-sheet').classList.toggle('open');
+        function toggleCart(show) {
+            const over = document.getElementById('cart-overlay');
+            const sheet = document.getElementById('cart-sheet');
+            if(show) { over.classList.add('active-overlay'); sheet.classList.add('active-sheet'); }
+            else { over.classList.remove('active-overlay'); sheet.classList.remove('active-sheet'); }
+        }
+
+        function startPayment() {
+            const btn = document.getElementById('pay-btn');
+            btn.innerText = "PROCESSING...";
+            btn.disabled = true;
+            setTimeout(() => {
+                alert("Payment Successful! 💳");
+                toggleCart(false);
+                navTo('track-page');
+                setTimeout(() => document.getElementById('p-bar').style.width = "100%", 500);
+            }, 2500);
         }
     </script>
 </body>
