@@ -1,172 +1,1568 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KaDelivery Elite</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <style>
-        :root { --brand: #FFD700; --bg: #050505; --card: #121212; --nav: rgba(18, 18, 18, 0.9); }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: white; margin: 0; -webkit-tap-highlight-color: transparent; }
-        
-        .page { display: none; min-height: 100vh; opacity: 0; transform: scale(0.98); transition: all 0.3s ease; }
-        .page.active { display: block; opacity: 1; transform: scale(1); }
-
-        /* Dribbble Nav Bar */
-        #main-nav { 
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(150%);
-            width: 90%; max-width: 450px; background: var(--nav); backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.1); border-radius: 40px; padding: 10px;
-            display: flex; justify-content: space-around; align-items: center; z-index: 1000;
-            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        #main-nav.show { transform: translateX(-50%) translateY(0); }
-        
-        .nav-item { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 30px; transition: 0.3s; color: #666; font-weight: 700; }
-        .nav-item.active-pill { background: var(--brand); color: black; }
-        .nav-text { display: none; font-size: 14px; }
-        .nav-item.active-pill .nav-text { display: block; }
-
-        /* Floating Checkout Bar */
-        #checkout-bar {
-            position: fixed; bottom: 110px; left: 5%; width: 90%; 
-            background: var(--brand); color: black; border-radius: 24px;
-            padding: 18px 24px; display: none; justify-content: space-between;
-            align-items: center; font-weight: 800; z-index: 999;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4); animation: slideUp 0.3s ease;
-        }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    </style>
-</head>
-<body>
-
-    <div id="login-page" class="page active flex flex-col items-center justify-center px-10">
-        <div class="w-24 h-24 bg-[#FFD700] rounded-[30px] flex items-center justify-center mb-8 shadow-2xl">
-            <span class="text-black text-4xl font-black italic">Ka</span>
-        </div>
-        <h1 class="text-4xl font-black mb-10 text-center">Elite Delivery</h1>
-        <button onclick="login()" class="w-full py-6 bg-[#FFD700] text-black font-black rounded-3xl text-xl">ENTER KITCHEN</button>
-    </div>
-
-    <div id="home-page" class="page pt-16 px-6 pb-40">
-        <h2 class="text-sm font-bold text-yellow-500 uppercase tracking-widest mb-2">Stepantsminda</h2>
-        <h3 class="text-3xl font-black mb-8">What's for dinner?</h3>
-        <div id="restaurant-list" class="space-y-6"></div>
-    </div>
-
-    <div id="menu-page" class="page pb-40">
-        <div id="menu-hero" class="h-72 bg-cover bg-center relative">
-            <button onclick="navTo('home-page')" class="absolute top-14 left-6 w-12 h-12 bg-black/50 rounded-full flex items-center justify-center">←</button>
-        </div>
-        <div class="px-6 -mt-12 bg-[#050505] rounded-t-[45px] pt-10 min-h-screen">
-            <h2 id="menu-title" class="text-4xl font-black mb-8"></h2>
-            <div id="menu-items-container" class="space-y-4"></div>
-        </div>
-    </div>
-
-    <div id="orders-page" class="page pt-16 px-6">
-        <h2 class="text-4xl font-black mb-10">My Orders</h2>
-        <div id="active-order-card" class="hidden bg-[#121212] p-8 rounded-[35px] border border-white/5">
-            <div class="flex justify-between items-center mb-6">
-                <span class="bg-yellow-500 text-black px-3 py-1 rounded-lg text-xs font-bold uppercase">Preparing</span>
-                <span id="order-price" class="font-black text-xl">0 GEL</span>
-            </div>
-            <div class="h-2 bg-white/5 rounded-full overflow-hidden">
-                <div id="order-progress" class="h-full bg-yellow-500 transition-all duration-1000" style="width: 10%"></div>
-            </div>
-            <p class="text-gray-500 mt-4 text-center text-sm font-medium">Chef is making your magic... 👨‍🍳</p>
-        </div>
-    </div>
-
-    <div id="checkout-bar" onclick="processPayment()">
-        <span class="tracking-widest">VIEW CART</span>
-        <span id="cart-total" class="text-xl italic">0 GEL</span>
-    </div>
-
-    <nav id="main-nav">
-        <div class="nav-item active-pill" onclick="navTo('home-page', this)"><span>🏠</span><span class="nav-text">Home</span></div>
-        <div class="nav-item" onclick="navTo('orders-page', this)"><span>📦</span><span class="nav-text">Orders</span></div>
-        <div class="nav-item" onclick="navTo('login-page', this)"><span>👤</span><span class="nav-text">Exit</span></div>
-    </nav>
-
-    <script>
-        let cart = [];
-        const data = {
-            graf: { name: "Graf Shaurma", img: "https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=800", menu: [{n:"Maxi Shaurma", p:16}, {n:"Hot Dog XXL", p:10}, {n:"Cold Cola", p:4}] },
-            panorama: { name: "Panorama", img: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800", menu: [{n:"Royal Khinkali", p:18}, {n:"Kupati", p:22}] },
-            teravino: { name: "Teravino", img: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=800", menu: [{n:"Saperavi Wine", p:40}, {n:"Wine Platter", p:35}] },
-            ska: { name: "Ska Market", img: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=800", menu: [{n:"Milk 1L", p:5}, {n:"Fresh Bread", p:2}, {n:"Local Cheese", p:12}] }
-        };
-
-        function login() { 
-            navTo('home-page'); 
-            document.getElementById('main-nav').classList.add('show');
-        }
-
-        function navTo(id, el) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            if(el) {
-                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active-pill'));
-                el.classList.add('active-pill');
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>KaDeliveryBeta - Food Delivery</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            primary: '#FF6B35',
+            'primary-dark': '#E55A2B',
+            'primary-light': '#FFF3EE',
+            dark: '#1A1A2E',
+            gray: {
+              50: '#F9FAFB',
+              100: '#F3F4F6',
+              200: '#E5E7EB',
+              300: '#D1D5DB',
+              400: '#9CA3AF',
+              500: '#6B7280',
+              600: '#4B5563',
+              700: '#374151',
+              800: '#1F2937',
+              900: '#111827',
             }
-            window.scrollTo(0,0);
+          },
+          borderRadius: {
+            '2xl': '16px',
+            '3xl': '24px',
+            '4xl': '32px',
+          }
         }
+      }
+    }
+  </script>
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      overscroll-behavior: none;
+    }
+    .screen {
+      display: none;
+      min-height: 100vh;
+      padding-bottom: 100px;
+    }
+    .screen.active {
+      display: block;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .animate-slide-up {
+      animation: slideUp 0.3s ease-out;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.2s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .animate-bounce-in {
+      animation: bounceIn 0.3s ease-out;
+    }
+    @keyframes bounceIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .pulse-btn:active {
+      transform: scale(0.96);
+    }
+    .status-bar {
+      background: linear-gradient(90deg, #FF6B35 var(--progress), #E5E7EB var(--progress));
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 max-w-md mx-auto relative overflow-x-hidden">
 
-        function renderHome() {
-            document.getElementById('restaurant-list').innerHTML = Object.entries(data).map(([key, val]) => `
-                <div class="bg-[#121212] rounded-[35px] overflow-hidden border border-white/5 active:scale-[0.97] transition" onclick="openMenu('${key}')">
-                    <img src="${val.img}" class="h-52 w-full object-cover">
-                    <div class="p-6">
-                        <h4 class="text-2xl font-black">${val.name}</h4>
-                        <p class="text-gray-500 font-bold">★ 4.9 • 20-30 min</p>
+  <!-- Splash/Welcome Screen -->
+  <div id="screen-welcome" class="screen active bg-primary min-h-screen flex flex-col items-center justify-center px-6 pb-0">
+    <div class="flex-1 flex flex-col items-center justify-center">
+      <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6 shadow-lg animate-bounce-in">
+        <svg class="w-14 h-14 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <h1 class="text-4xl font-extrabold text-white mb-2">FoodDash</h1>
+      <p class="text-white/80 text-lg">Delicious food, delivered fast</p>
+    </div>
+    <div class="w-full pb-12">
+      <button onclick="showScreen('auth')" class="w-full bg-white text-primary font-bold py-4 rounded-3xl text-lg pulse-btn shadow-lg hover:bg-gray-50 transition-all">
+        Get Started
+      </button>
+      <p class="text-white/60 text-center mt-4 text-sm">By continuing, you agree to our Terms of Service</p>
+    </div>
+  </div>
+
+  <!-- Auth Screen -->
+  <div id="screen-auth" class="screen bg-white min-h-screen px-6 pt-12 pb-0">
+    <button onclick="showScreen('welcome')" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mb-8">
+      <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </button>
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome back!</h1>
+    <p class="text-gray-500 mb-8">Sign in to continue ordering your favorite food</p>
+    
+    <div class="space-y-4 mb-6">
+      <div>
+        <label class="text-sm font-medium text-gray-700 mb-2 block">Phone Number</label>
+        <div class="flex items-center bg-gray-100 rounded-2xl px-4 py-4">
+          <span class="text-gray-600 font-medium mr-2">+1</span>
+          <input type="tel" placeholder="(555) 000-0000" class="bg-transparent flex-1 outline-none text-gray-900 font-medium">
+        </div>
+      </div>
+    </div>
+    
+    <button onclick="showScreen('location')" class="w-full bg-primary text-white font-bold py-4 rounded-3xl text-lg pulse-btn shadow-md hover:bg-primary-dark transition-all mb-6">
+      Continue
+    </button>
+    
+    <div class="flex items-center my-6">
+      <div class="flex-1 h-px bg-gray-200"></div>
+      <span class="px-4 text-gray-400 text-sm">or continue with</span>
+      <div class="flex-1 h-px bg-gray-200"></div>
+    </div>
+    
+    <div class="flex gap-3">
+      <button class="flex-1 bg-gray-100 py-4 rounded-2xl flex items-center justify-center gap-2 pulse-btn hover:bg-gray-200 transition-all">
+        <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        <span class="font-semibold text-gray-700">Google</span>
+      </button>
+      <button class="flex-1 bg-gray-900 py-4 rounded-2xl flex items-center justify-center gap-2 pulse-btn hover:bg-gray-800 transition-all">
+        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        <span class="font-semibold text-white">Apple</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Location Screen -->
+  <div id="screen-location" class="screen bg-white min-h-screen px-6 pt-12">
+    <button onclick="showScreen('auth')" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mb-8">
+      <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </button>
+    
+    <div class="w-20 h-20 bg-primary-light rounded-full flex items-center justify-center mx-auto mb-6">
+      <svg class="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+    </div>
+    
+    <h1 class="text-2xl font-bold text-center mb-2">Set Delivery Location</h1>
+    <p class="text-gray-500 text-center mb-8">We need your location to show nearby restaurants</p>
+    
+    <div class="bg-gray-100 rounded-2xl px-4 py-4 flex items-center mb-4">
+      <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input id="address-input" type="text" placeholder="Search for address..." class="bg-transparent flex-1 outline-none text-gray-900">
+    </div>
+    
+    <button onclick="useCurrentLocation()" class="w-full bg-gray-100 py-4 rounded-2xl flex items-center justify-center gap-3 mb-6 pulse-btn hover:bg-gray-200 transition-all">
+      <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+      </svg>
+      <span class="font-semibold text-gray-700">Use Current Location</span>
+    </button>
+    
+    <div class="mb-6">
+      <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Saved Addresses</h3>
+      <div onclick="selectAddress('Home', '123 Main Street, Apt 4B')" class="bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-4 mb-3 pulse-btn cursor-pointer hover:border-primary transition-all">
+        <div class="w-12 h-12 bg-primary-light rounded-full flex items-center justify-center">
+          <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+          </svg>
+        </div>
+        <div class="flex-1">
+          <p class="font-semibold text-gray-900">Home</p>
+          <p class="text-gray-500 text-sm">123 Main Street, Apt 4B</p>
+        </div>
+        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+      <div onclick="selectAddress('Office', '456 Business Ave, Floor 12')" class="bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-4 pulse-btn cursor-pointer hover:border-primary transition-all">
+        <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          </svg>
+        </div>
+        <div class="flex-1">
+          <p class="font-semibold text-gray-900">Office</p>
+          <p class="text-gray-500 text-sm">456 Business Ave, Floor 12</p>
+        </div>
+        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Home Screen -->
+  <div id="screen-home" class="screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white px-5 pt-12 pb-4 shadow-sm">
+      <div class="flex items-center justify-between mb-4">
+        <div onclick="showScreen('location')" class="flex items-center gap-2 cursor-pointer">
+          <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+          </svg>
+          <div>
+            <p class="text-xs text-gray-500">Deliver to</p>
+            <p id="current-address" class="font-semibold text-gray-900 text-sm">123 Main Street</p>
+          </div>
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center relative">
+            <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            <span class="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-xs font-bold rounded-full flex items-center justify-center">2</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Search Bar -->
+      <div onclick="showScreen('search')" class="bg-gray-100 rounded-2xl px-4 py-3 flex items-center cursor-pointer">
+        <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <span class="text-gray-400">Search for restaurants or dishes...</span>
+      </div>
+    </div>
+
+    <!-- Promo Banner -->
+    <div class="px-5 py-4">
+      <div class="bg-gradient-to-r from-primary to-orange-500 rounded-3xl p-5 relative overflow-hidden">
+        <div class="relative z-10">
+          <p class="text-white/80 text-sm font-medium">Limited Time Offer</p>
+          <h3 class="text-white text-2xl font-bold mb-2">50% OFF</h3>
+          <p class="text-white/80 text-sm mb-3">On your first 3 orders!</p>
+          <button class="bg-white text-primary font-bold px-5 py-2 rounded-full text-sm pulse-btn">Order Now</button>
+        </div>
+        <div class="absolute right-0 top-0 w-32 h-32 opacity-20">
+          <svg viewBox="0 0 100 100" fill="white">
+            <circle cx="80" cy="20" r="60"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="px-5 mb-4">
+      <h2 class="text-lg font-bold mb-3">Categories</h2>
+      <div class="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
+        <div onclick="filterByCategory('all')" class="category-btn flex-shrink-0 flex flex-col items-center gap-2 cursor-pointer">
+          <div class="w-16 h-16 bg-primary-light rounded-2xl flex items-center justify-center">
+            <span class="text-2xl">🍽️</span>
+          </div>
+          <span class="text-xs font-medium text-gray-700">All</span>
+        </div>
+        <div onclick="filterByCategory('pizza')" class="category-btn flex-shrink-0 flex flex-col items-center gap-2 cursor-pointer">
+          <div class="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center">
+            <span class="text-2xl">🍕</span>
+          </div>
+          <span class="text-xs font-medium text-gray-700">Pizza</span>
+        </div>
+        <div onclick="filterByCategory('burger')" class="category-btn flex-shrink-0 flex flex-col items-center gap-2 cursor-pointer">
+          <div class="w-16 h-16 bg-yellow-50 rounded-2xl flex items-center justify-center">
+            <span class="text-2xl">🍔</span>
+          </div>
+          <span class="text-xs font-medium text-gray-700">Burgers</span>
+        </div>
+        <div onclick="filterByCategory('sushi')" class="category-btn flex-shrink-0 flex flex-col items-center gap-2 cursor-pointer">
+          <div class="w-16 h-16 bg-pink-50 rounded-2xl flex items-center justify-center">
+            <span class="text-2xl">🍣</span>
+          </div>
+          <span class="text-xs font-medium text-gray-700">Sushi</span>
+        </div>
+        <div onclick="filterByCategory('chinese')" class="category-btn flex-shrink-0 flex flex-col items-center gap-2 cursor-pointer">
+          <div class="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center">
+            <span class="text-2xl">🥡</span>
+          </div>
+          <span class="text-xs font-medium text-gray-700">Chinese</span>
+        </div>
+        <div onclick="filterByCategory('mexican')" class="category-btn flex-shrink-0 flex flex-col items-center gap-2 cursor-pointer">
+          <div class="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center">
+            <span class="text-2xl">🌮</span>
+          </div>
+          <span class="text-xs font-medium text-gray-700">Mexican</span>
+        </div>
+        <div onclick="filterByCategory('healthy')" class="category-btn flex-shrink-0 flex flex-col items-center gap-2 cursor-pointer">
+          <div class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center">
+            <span class="text-2xl">🥗</span>
+          </div>
+          <span class="text-xs font-medium text-gray-700">Healthy</span>
+        </div>
+        <div onclick="filterByCategory('dessert')" class="category-btn flex-shrink-0 flex flex-col items-center gap-2 cursor-pointer">
+          <div class="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center">
+            <span class="text-2xl">🍰</span>
+          </div>
+          <span class="text-xs font-medium text-gray-700">Desserts</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Popular Restaurants -->
+    <div class="px-5">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-bold">Popular Near You</h2>
+        <button class="text-primary font-semibold text-sm">See All</button>
+      </div>
+      <div id="restaurant-list" class="space-y-4">
+        <!-- Restaurants will be rendered here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Screen -->
+  <div id="screen-search" class="screen bg-white min-h-screen">
+    <div class="px-5 pt-12 pb-4 sticky top-0 bg-white z-10">
+      <div class="flex items-center gap-3 mb-4">
+        <button onclick="showScreen('home')" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <div class="flex-1 bg-gray-100 rounded-2xl px-4 py-3 flex items-center">
+          <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input id="search-input" type="text" placeholder="Search..." class="bg-transparent flex-1 outline-none text-gray-900" oninput="handleSearch(this.value)">
+        </div>
+      </div>
+    </div>
+    
+    <div class="px-5">
+      <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Recent Searches</h3>
+      <div class="flex flex-wrap gap-2 mb-6">
+        <span onclick="searchFor('Pizza')" class="bg-gray-100 px-4 py-2 rounded-full text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-200">Pizza</span>
+        <span onclick="searchFor('Sushi')" class="bg-gray-100 px-4 py-2 rounded-full text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-200">Sushi</span>
+        <span onclick="searchFor('Burgers')" class="bg-gray-100 px-4 py-2 rounded-full text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-200">Burgers</span>
+        <span onclick="searchFor('Thai')" class="bg-gray-100 px-4 py-2 rounded-full text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-200">Thai Food</span>
+      </div>
+      
+      <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Popular This Week</h3>
+      <div id="search-results" class="space-y-3">
+        <!-- Search results will appear here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Restaurant Menu Screen -->
+  <div id="screen-restaurant" class="screen bg-gray-50">
+    <div id="restaurant-header" class="relative">
+      <!-- Restaurant header content will be rendered here -->
+    </div>
+    <div id="restaurant-menu" class="px-5 py-4">
+      <!-- Menu items will be rendered here -->
+    </div>
+  </div>
+
+  <!-- Cart Screen -->
+  <div id="screen-cart" class="screen bg-gray-50">
+    <div class="bg-white px-5 pt-12 pb-4 sticky top-0 z-10">
+      <div class="flex items-center gap-4">
+        <button onclick="goBack()" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+          <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <h1 class="text-xl font-bold">Your Cart</h1>
+      </div>
+    </div>
+    
+    <div id="cart-items" class="px-5 py-4">
+      <!-- Cart items will be rendered here -->
+    </div>
+    
+    <div id="cart-summary" class="bg-white rounded-t-3xl px-5 pt-6 pb-8 mt-auto shadow-lg">
+      <!-- Cart summary will be rendered here -->
+    </div>
+  </div>
+
+  <!-- Checkout Screen -->
+  <div id="screen-checkout" class="screen bg-gray-50">
+    <div class="bg-white px-5 pt-12 pb-4 sticky top-0 z-10">
+      <div class="flex items-center gap-4">
+        <button onclick="showScreen('cart')" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+          <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <h1 class="text-xl font-bold">Checkout</h1>
+      </div>
+    </div>
+    
+    <div class="px-5 py-4 space-y-4">
+      <!-- Delivery Address -->
+      <div class="bg-white rounded-3xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-semibold text-gray-900">Delivery Address</h3>
+          <button class="text-primary text-sm font-semibold">Change</button>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-primary-light rounded-full flex items-center justify-center">
+            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            </svg>
+          </div>
+          <div>
+            <p class="font-medium text-gray-900">Home</p>
+            <p id="checkout-address" class="text-sm text-gray-500">123 Main Street, Apt 4B</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Delivery Time -->
+      <div class="bg-white rounded-3xl p-4">
+        <h3 class="font-semibold text-gray-900 mb-3">Delivery Time</h3>
+        <div class="flex gap-3">
+          <button class="delivery-time-btn flex-1 bg-primary text-white py-3 rounded-2xl font-semibold text-sm" data-time="asap">
+            ASAP (25-35 min)
+          </button>
+          <button class="delivery-time-btn flex-1 bg-gray-100 text-gray-700 py-3 rounded-2xl font-semibold text-sm" data-time="scheduled">
+            Schedule
+          </button>
+        </div>
+      </div>
+      
+      <!-- Payment Method -->
+      <div class="bg-white rounded-3xl p-4">
+        <h3 class="font-semibold text-gray-900 mb-3">Payment Method</h3>
+        <div class="space-y-3">
+          <div onclick="selectPayment('card')" class="payment-option flex items-center gap-3 p-3 border-2 border-primary rounded-2xl cursor-pointer" data-method="card">
+            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-gray-900">Credit / Debit Card</p>
+              <p class="text-sm text-gray-500">**** **** **** 4242</p>
+            </div>
+            <div class="w-5 h-5 border-2 border-primary rounded-full flex items-center justify-center">
+              <div class="w-3 h-3 bg-primary rounded-full"></div>
+            </div>
+          </div>
+          
+          <div onclick="selectPayment('cash')" class="payment-option flex items-center gap-3 p-3 border-2 border-gray-200 rounded-2xl cursor-pointer" data-method="cash">
+            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-gray-900">Cash on Delivery</p>
+              <p class="text-sm text-gray-500">Pay when you receive</p>
+            </div>
+            <div class="w-5 h-5 border-2 border-gray-300 rounded-full"></div>
+          </div>
+        </div>
+        
+        <!-- Card Details (hidden by default) -->
+        <div id="card-details" class="mt-4 space-y-3">
+          <div>
+            <label class="text-sm font-medium text-gray-700 mb-1 block">Card Number</label>
+            <input type="text" placeholder="1234 5678 9012 3456" class="w-full bg-gray-100 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary">
+          </div>
+          <div class="flex gap-3">
+            <div class="flex-1">
+              <label class="text-sm font-medium text-gray-700 mb-1 block">Expiry</label>
+              <input type="text" placeholder="MM/YY" class="w-full bg-gray-100 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary">
+            </div>
+            <div class="flex-1">
+              <label class="text-sm font-medium text-gray-700 mb-1 block">CVV</label>
+              <input type="text" placeholder="123" class="w-full bg-gray-100 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary">
+            </div>
+          </div>
+        </div>
+        
+        <!-- Cash Change (hidden by default) -->
+        <div id="cash-details" class="mt-4 hidden">
+          <div class="bg-green-50 rounded-2xl p-4">
+            <label class="text-sm font-medium text-gray-700 mb-2 block">Amount you will pay with</label>
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-2xl font-bold text-gray-700">$</span>
+              <input id="cash-amount" type="number" placeholder="0.00" class="text-2xl font-bold bg-transparent outline-none w-full" oninput="calculateChange()">
+            </div>
+            <div id="change-display" class="flex items-center justify-between bg-white rounded-xl p-3">
+              <span class="text-gray-600">Change for courier:</span>
+              <span id="change-amount" class="text-xl font-bold text-green-600">$0.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Promo Code -->
+      <div class="bg-white rounded-3xl p-4">
+        <div class="flex items-center gap-3">
+          <div class="flex-1 bg-gray-100 rounded-2xl px-4 py-3 flex items-center">
+            <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+            </svg>
+            <input type="text" placeholder="Enter promo code" class="bg-transparent flex-1 outline-none text-gray-900">
+          </div>
+          <button class="bg-primary text-white font-semibold px-5 py-3 rounded-2xl pulse-btn">Apply</button>
+        </div>
+      </div>
+      
+      <!-- Order Summary -->
+      <div id="checkout-summary" class="bg-white rounded-3xl p-4">
+        <!-- Will be rendered dynamically -->
+      </div>
+    </div>
+    
+    <!-- Place Order Button -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white px-5 py-4 shadow-lg max-w-md mx-auto">
+      <button onclick="placeOrder()" class="w-full bg-primary text-white font-bold py-4 rounded-3xl text-lg pulse-btn flex items-center justify-center gap-2">
+        <span>Place Order</span>
+        <span id="checkout-total-btn">$0.00</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Orders Screen -->
+  <div id="screen-orders" class="screen bg-gray-50">
+    <div class="bg-white px-5 pt-12 pb-4">
+      <h1 class="text-2xl font-bold">My Orders</h1>
+    </div>
+    
+    <div class="px-5 py-4">
+      <!-- Tabs -->
+      <div class="flex bg-gray-100 rounded-2xl p-1 mb-4">
+        <button onclick="showOrderTab('active')" class="order-tab flex-1 py-3 rounded-xl font-semibold text-sm bg-white text-gray-900 shadow-sm" data-tab="active">Active</button>
+        <button onclick="showOrderTab('history')" class="order-tab flex-1 py-3 rounded-xl font-semibold text-sm text-gray-500" data-tab="history">History</button>
+      </div>
+      
+      <div id="active-orders">
+        <!-- Active orders will be rendered here -->
+      </div>
+      
+      <div id="history-orders" class="hidden">
+        <!-- Order history will be rendered here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Screen -->
+  <div id="screen-profile" class="screen bg-gray-50">
+    <div class="bg-white px-5 pt-12 pb-6">
+      <div class="flex items-center gap-4">
+        <div class="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white text-2xl font-bold">
+          JD
+        </div>
+        <div>
+          <h1 class="text-xl font-bold">John Doe</h1>
+          <p class="text-gray-500">+1 (555) 000-0000</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="px-5 py-4 space-y-3">
+      <div class="bg-white rounded-3xl overflow-hidden">
+        <div class="p-4 flex items-center gap-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50">
+          <div class="w-10 h-10 bg-primary-light rounded-full flex items-center justify-center">
+            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold text-gray-900">My Profile</p>
+            <p class="text-sm text-gray-500">Edit personal information</p>
+          </div>
+          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </div>
+        
+        <div onclick="showScreen('location')" class="p-4 flex items-center gap-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50">
+          <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold text-gray-900">Saved Addresses</p>
+            <p class="text-sm text-gray-500">Manage delivery locations</p>
+          </div>
+          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </div>
+        
+        <div class="p-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50">
+          <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold text-gray-900">Payment Methods</p>
+            <p class="text-sm text-gray-500">Add or remove cards</p>
+          </div>
+          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-3xl overflow-hidden">
+        <div class="p-4 flex items-center gap-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50">
+          <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+            <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold text-gray-900">Favorites</p>
+            <p class="text-sm text-gray-500">Your favorite restaurants</p>
+          </div>
+          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </div>
+        
+        <div class="p-4 flex items-center gap-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50">
+          <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold text-gray-900">Promo Codes</p>
+            <p class="text-sm text-gray-500">View available offers</p>
+          </div>
+          <span class="bg-primary text-white text-xs font-bold px-2 py-1 rounded-full">3</span>
+          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </div>
+        
+        <div class="p-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50">
+          <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold text-gray-900">Settings</p>
+            <p class="text-sm text-gray-500">App preferences</p>
+          </div>
+          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-3xl overflow-hidden">
+        <div class="p-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50">
+          <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold text-red-600">Log Out</p>
+          </div>
+        </div>
+      </div>
+      
+      <p class="text-center text-gray-400 text-sm mt-6">FoodDash v1.0.0</p>
+    </div>
+  </div>
+
+  <!-- Order Confirmation Modal -->
+  <div id="order-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-5 hidden">
+    <div class="bg-white rounded-3xl p-6 w-full max-w-sm animate-bounce-in">
+      <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+      </div>
+      <h2 class="text-2xl font-bold text-center mb-2">Order Placed!</h2>
+      <p class="text-gray-500 text-center mb-6">Your order has been confirmed and is being prepared.</p>
+      <div class="bg-gray-100 rounded-2xl p-4 mb-6">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-gray-600">Order ID</span>
+          <span id="modal-order-id" class="font-semibold">#FD-12345</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-gray-600">Estimated Time</span>
+          <span class="font-semibold text-primary">25-35 min</span>
+        </div>
+      </div>
+      <button onclick="trackOrder()" class="w-full bg-primary text-white font-bold py-4 rounded-3xl pulse-btn mb-3">
+        Track Order
+      </button>
+      <button onclick="closeOrderModal()" class="w-full bg-gray-100 text-gray-700 font-bold py-4 rounded-3xl pulse-btn">
+        Back to Home
+      </button>
+    </div>
+  </div>
+
+  <!-- Floating Cart Button -->
+  <div id="floating-cart" class="fixed bottom-24 right-5 z-40 hidden">
+    <button onclick="showScreen('cart')" class="bg-primary text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg pulse-btn relative">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+      </svg>
+      <span id="cart-badge" class="absolute -top-1 -right-1 w-6 h-6 bg-white text-primary text-xs font-bold rounded-full flex items-center justify-center shadow">0</span>
+    </button>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-2 py-2 z-50 max-w-md mx-auto hidden">
+    <div class="flex items-center justify-around">
+      <button onclick="showScreen('home')" class="nav-btn flex flex-col items-center gap-1 px-4 py-2 rounded-2xl text-primary" data-screen="home">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+        <span class="text-xs font-semibold">Home</span>
+      </button>
+      <button onclick="showScreen('search')" class="nav-btn flex flex-col items-center gap-1 px-4 py-2 rounded-2xl text-gray-400" data-screen="search">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <span class="text-xs font-medium">Search</span>
+      </button>
+      <button onclick="showScreen('orders')" class="nav-btn flex flex-col items-center gap-1 px-4 py-2 rounded-2xl text-gray-400" data-screen="orders">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+        </svg>
+        <span class="text-xs font-medium">Orders</span>
+      </button>
+      <button onclick="showScreen('profile')" class="nav-btn flex flex-col items-center gap-1 px-4 py-2 rounded-2xl text-gray-400" data-screen="profile">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+        <span class="text-xs font-medium">Profile</span>
+      </button>
+    </div>
+  </nav>
+
+  <script>
+    // ==================== APP STATE ====================
+    const state = {
+      currentScreen: 'welcome',
+      previousScreen: 'home',
+      currentAddress: '123 Main Street',
+      selectedRestaurant: null,
+      cart: [],
+      orders: [],
+      paymentMethod: 'card',
+      restaurants: [
+        {
+          id: 1,
+          name: "Bella Italia",
+          category: "pizza",
+          image: "https://images.unsplash.com/photo-1579751626657-72bc17010498?w=400&h=250&fit=crop",
+          rating: 4.8,
+          reviews: 324,
+          deliveryFee: 2.99,
+          deliveryTime: "25-35",
+          distance: 2.5,
+          featured: true,
+          menu: [
+            { id: 101, name: "Margherita Pizza", description: "Fresh tomatoes, mozzarella, basil", price: 14.99, image: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=200&h=200&fit=crop", category: "Pizza" },
+            { id: 102, name: "Pepperoni Pizza", description: "Classic pepperoni with cheese", price: 16.99, image: "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=200&h=200&fit=crop", category: "Pizza" },
+            { id: 103, name: "Quattro Formaggi", description: "Four cheese blend pizza", price: 18.99, image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=200&h=200&fit=crop", category: "Pizza" },
+            { id: 104, name: "Pasta Carbonara", description: "Creamy bacon pasta", price: 15.99, image: "https://images.unsplash.com/photo-1612874742237-6526221588e3?w=200&h=200&fit=crop", category: "Pasta" },
+            { id: 105, name: "Tiramisu", description: "Classic Italian dessert", price: 7.99, image: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=200&h=200&fit=crop", category: "Desserts" },
+            { id: 106, name: "Garlic Bread", description: "Crispy garlic bread with herbs", price: 5.99, image: "https://images.unsplash.com/photo-1619535860434-ba1d8fa12536?w=200&h=200&fit=crop", category: "Sides" }
+          ]
+        },
+        {
+          id: 2,
+          name: "Burger Palace",
+          category: "burger",
+          image: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400&h=250&fit=crop",
+          rating: 4.6,
+          reviews: 512,
+          deliveryFee: 1.99,
+          deliveryTime: "20-30",
+          distance: 1.8,
+          featured: true,
+          menu: [
+            { id: 201, name: "Classic Cheeseburger", description: "Beef patty, cheese, lettuce, tomato", price: 12.99, image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&h=200&fit=crop", category: "Burgers" },
+            { id: 202, name: "Double Bacon Burger", description: "Double beef, crispy bacon, BBQ sauce", price: 16.99, image: "https://images.unsplash.com/photo-1553979459-d2229ba7433b?w=200&h=200&fit=crop", category: "Burgers" },
+            { id: 203, name: "Veggie Burger", description: "Plant-based patty, fresh veggies", price: 13.99, image: "https://images.unsplash.com/photo-1520072959219-c595dc870360?w=200&h=200&fit=crop", category: "Burgers" },
+            { id: 204, name: "Loaded Fries", description: "Cheese, bacon, sour cream", price: 8.99, image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=200&h=200&fit=crop", category: "Sides" },
+            { id: 205, name: "Onion Rings", description: "Crispy battered onion rings", price: 6.99, image: "https://images.unsplash.com/photo-1639024471283-03518883512d?w=200&h=200&fit=crop", category: "Sides" },
+            { id: 206, name: "Milkshake", description: "Vanilla, chocolate or strawberry", price: 5.99, image: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=200&h=200&fit=crop", category: "Drinks" }
+          ]
+        },
+        {
+          id: 3,
+          name: "Tokyo Sushi",
+          category: "sushi",
+          image: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&h=250&fit=crop",
+          rating: 4.9,
+          reviews: 287,
+          deliveryFee: 3.99,
+          deliveryTime: "30-40",
+          distance: 3.2,
+          featured: false,
+          menu: [
+            { id: 301, name: "Salmon Nigiri (6pc)", description: "Fresh salmon on rice", price: 12.99, image: "https://images.unsplash.com/photo-1583623025817-d180a2221d0a?w=200&h=200&fit=crop", category: "Nigiri" },
+            { id: 302, name: "Dragon Roll", description: "Eel, avocado, cucumber", price: 16.99, image: "https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56?w=200&h=200&fit=crop", category: "Rolls" },
+            { id: 303, name: "Rainbow Roll", description: "Assorted fish over California roll", price: 18.99, image: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=200&h=200&fit=crop", category: "Rolls" },
+            { id: 304, name: "Miso Soup", description: "Traditional Japanese soup", price: 4.99, image: "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=200&h=200&fit=crop", category: "Soups" },
+            { id: 305, name: "Edamame", description: "Steamed soybeans with sea salt", price: 5.99, image: "https://images.unsplash.com/photo-1564894809611-1742fc40ed80?w=200&h=200&fit=crop", category: "Appetizers" },
+            { id: 306, name: "Green Tea Ice Cream", description: "Matcha flavored ice cream", price: 6.99, image: "https://images.unsplash.com/photo-1629385701021-fcd568a743e8?w=200&h=200&fit=crop", category: "Desserts" }
+          ]
+        },
+        {
+          id: 4,
+          name: "Dragon Wok",
+          category: "chinese",
+          image: "https://images.unsplash.com/photo-1585032226651-759b368d7246?w=400&h=250&fit=crop",
+          rating: 4.5,
+          reviews: 198,
+          deliveryFee: 2.49,
+          deliveryTime: "25-35",
+          distance: 2.1,
+          featured: false,
+          menu: [
+            { id: 401, name: "Kung Pao Chicken", description: "Spicy chicken with peanuts", price: 14.99, image: "https://images.unsplash.com/photo-1525755662778-989d0524087e?w=200&h=200&fit=crop", category: "Main" },
+            { id: 402, name: "Sweet & Sour Pork", description: "Crispy pork in tangy sauce", price: 15.99, image: "https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=200&h=200&fit=crop", category: "Main" },
+            { id: 403, name: "Fried Rice", description: "Egg fried rice with vegetables", price: 10.99, image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=200&h=200&fit=crop", category: "Rice" },
+            { id: 404, name: "Spring Rolls (4pc)", description: "Crispy vegetable rolls", price: 6.99, image: "https://images.unsplash.com/photo-1548507200-d5fdc6f3d26e?w=200&h=200&fit=crop", category: "Appetizers" },
+            { id: 405, name: "Wonton Soup", description: "Pork wontons in clear broth", price: 7.99, image: "https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=200&h=200&fit=crop", category: "Soups" }
+          ]
+        },
+        {
+          id: 5,
+          name: "Taco Fiesta",
+          category: "mexican",
+          image: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&h=250&fit=crop",
+          rating: 4.7,
+          reviews: 423,
+          deliveryFee: 1.99,
+          deliveryTime: "15-25",
+          distance: 1.2,
+          featured: true,
+          menu: [
+            { id: 501, name: "Beef Tacos (3pc)", description: "Seasoned beef, salsa, cheese", price: 11.99, image: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=200&h=200&fit=crop", category: "Tacos" },
+            { id: 502, name: "Chicken Burrito", description: "Large burrito with all toppings", price: 13.99, image: "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=200&h=200&fit=crop", category: "Burritos" },
+            { id: 503, name: "Quesadilla", description: "Cheese quesadilla with sour cream", price: 9.99, image: "https://images.unsplash.com/photo-1618040996337-56904b7850b9?w=200&h=200&fit=crop", category: "Quesadillas" },
+            { id: 504, name: "Nachos Supreme", description: "Loaded nachos with everything", price: 12.99, image: "https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?w=200&h=200&fit=crop", category: "Appetizers" },
+            { id: 505, name: "Guacamole & Chips", description: "Fresh guacamole with tortilla chips", price: 7.99, image: "https://images.unsplash.com/photo-1600891964599-f61ba0e24092?w=200&h=200&fit=crop", category: "Appetizers" },
+            { id: 506, name: "Churros", description: "Cinnamon sugar churros", price: 5.99, image: "https://images.unsplash.com/photo-1624371414361-e670edf4891c?w=200&h=200&fit=crop", category: "Desserts" }
+          ]
+        },
+        {
+          id: 6,
+          name: "Green Garden",
+          category: "healthy",
+          image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=250&fit=crop",
+          rating: 4.8,
+          reviews: 156,
+          deliveryFee: 2.99,
+          deliveryTime: "20-30",
+          distance: 2.8,
+          featured: false,
+          menu: [
+            { id: 601, name: "Caesar Salad", description: "Romaine, parmesan, croutons", price: 11.99, image: "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?w=200&h=200&fit=crop", category: "Salads" },
+            { id: 602, name: "Buddha Bowl", description: "Quinoa, vegetables, tahini", price: 14.99, image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop", category: "Bowls" },
+            { id: 603, name: "Avocado Toast", description: "Sourdough, avocado, poached egg", price: 12.99, image: "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=200&h=200&fit=crop", category: "Toast" },
+            { id: 604, name: "Acai Bowl", description: "Acai, granola, fresh fruits", price: 13.99, image: "https://images.unsplash.com/photo-1590301157890-4810ed352733?w=200&h=200&fit=crop", category: "Bowls" },
+            { id: 605, name: "Green Smoothie", description: "Spinach, banana, almond milk", price: 7.99, image: "https://images.unsplash.com/photo-1638176066666-ffb2f013c7dd?w=200&h=200&fit=crop", category: "Drinks" }
+          ]
+        },
+        {
+          id: 7,
+          name: "Sweet Delights",
+          category: "dessert",
+          image: "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=400&h=250&fit=crop",
+          rating: 4.9,
+          reviews: 234,
+          deliveryFee: 3.49,
+          deliveryTime: "25-35",
+          distance: 3.5,
+          featured: false,
+          menu: [
+            { id: 701, name: "Chocolate Cake", description: "Rich dark chocolate layer cake", price: 8.99, image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=200&h=200&fit=crop", category: "Cakes" },
+            { id: 702, name: "Cheesecake", description: "New York style cheesecake", price: 7.99, image: "https://images.unsplash.com/photo-1524351199678-941a58a3df50?w=200&h=200&fit=crop", category: "Cakes" },
+            { id: 703, name: "Macarons (6pc)", description: "Assorted French macarons", price: 12.99, image: "https://images.unsplash.com/photo-1569864358642-9d1684040f43?w=200&h=200&fit=crop", category: "Pastries" },
+            { id: 704, name: "Ice Cream Sundae", description: "Vanilla ice cream, toppings", price: 9.99, image: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=200&h=200&fit=crop", category: "Ice Cream" },
+            { id: 705, name: "Croissant", description: "Buttery French croissant", price: 4.99, image: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=200&h=200&fit=crop", category: "Pastries" }
+          ]
+        }
+      ]
+    };
+
+    // ==================== SCREEN MANAGEMENT ====================
+    function showScreen(screenName) {
+      // Hide all screens
+      document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+      });
+      
+      // Show target screen
+      const targetScreen = document.getElementById(`screen-${screenName}`);
+      if (targetScreen) {
+        targetScreen.classList.add('active');
+        state.previousScreen = state.currentScreen;
+        state.currentScreen = screenName;
+      }
+      
+      // Show/hide bottom nav and floating cart
+      const mainScreens = ['home', 'search', 'orders', 'profile'];
+      const bottomNav = document.getElementById('bottom-nav');
+      const floatingCart = document.getElementById('floating-cart');
+      
+      if (mainScreens.includes(screenName)) {
+        bottomNav.classList.remove('hidden');
+        if (state.cart.length > 0 && screenName !== 'cart') {
+          floatingCart.classList.remove('hidden');
+        } else {
+          floatingCart.classList.add('hidden');
+        }
+      } else if (screenName === 'restaurant') {
+        bottomNav.classList.add('hidden');
+        if (state.cart.length > 0) {
+          floatingCart.classList.remove('hidden');
+        }
+      } else {
+        bottomNav.classList.add('hidden');
+        floatingCart.classList.add('hidden');
+      }
+      
+      // Update nav active state
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        if (btn.dataset.screen === screenName) {
+          btn.classList.remove('text-gray-400');
+          btn.classList.add('text-primary');
+        } else {
+          btn.classList.remove('text-primary');
+          btn.classList.add('text-gray-400');
+        }
+      });
+      
+      // Render screen content
+      if (screenName === 'home') renderRestaurants();
+      if (screenName === 'cart') renderCart();
+      if (screenName === 'checkout') renderCheckout();
+      if (screenName === 'orders') renderOrders();
+    }
+
+    function goBack() {
+      showScreen(state.previousScreen || 'home');
+    }
+
+    // ==================== RESTAURANT FUNCTIONS ====================
+    function renderRestaurants(filter = 'all') {
+      const list = document.getElementById('restaurant-list');
+      let restaurants = state.restaurants;
+      
+      if (filter !== 'all') {
+        restaurants = restaurants.filter(r => r.category === filter);
+      }
+      
+      list.innerHTML = restaurants.map(r => `
+        <div onclick="openRestaurant(${r.id})" class="bg-white rounded-3xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-all pulse-btn">
+          <div class="relative">
+            <img src="${r.image}" alt="${r.name}" class="w-full h-40 object-cover">
+            ${r.featured ? '<span class="absolute top-3 left-3 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full">Featured</span>' : ''}
+            <button onclick="event.stopPropagation(); toggleFavorite(${r.id})" class="absolute top-3 right-3 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center">
+              <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+              </svg>
+            </button>
+          </div>
+          <div class="p-4">
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="font-bold text-gray-900">${r.name}</h3>
+              <div class="flex items-center gap-1 bg-green-100 px-2 py-1 rounded-lg">
+                <svg class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                <span class="text-xs font-bold text-green-700">${r.rating}</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-4 text-sm text-gray-500">
+              <span class="flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                ${r.deliveryTime} min
+              </span>
+              <span class="flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                </svg>
+                ${r.distance} km
+              </span>
+              <span class="text-primary font-semibold">$${r.deliveryFee.toFixed(2)} delivery</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterByCategory(category) {
+      renderRestaurants(category);
+    }
+
+    function openRestaurant(id) {
+      const restaurant = state.restaurants.find(r => r.id === id);
+      if (!restaurant) return;
+      
+      state.selectedRestaurant = restaurant;
+      
+      // Render restaurant header
+      document.getElementById('restaurant-header').innerHTML = `
+        <div class="relative">
+          <img src="${restaurant.image}" alt="${restaurant.name}" class="w-full h-56 object-cover">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+          <button onclick="goBack()" class="absolute top-12 left-5 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center">
+            <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <button class="absolute top-12 right-5 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center">
+            <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="bg-white px-5 py-4 -mt-6 rounded-t-3xl relative">
+          <h1 class="text-2xl font-bold mb-2">${restaurant.name}</h1>
+          <div class="flex items-center gap-4 text-sm text-gray-500 mb-4">
+            <span class="flex items-center gap-1">
+              <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+              <span class="font-semibold text-gray-900">${restaurant.rating}</span>
+              <span>(${restaurant.reviews})</span>
+            </span>
+            <span>${restaurant.deliveryTime} min</span>
+            <span>${restaurant.distance} km</span>
+          </div>
+          <div class="flex items-center gap-2 text-sm">
+            <span class="bg-primary-light text-primary px-3 py-1 rounded-full font-medium">$${restaurant.deliveryFee.toFixed(2)} Delivery</span>
+            <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full font-medium">Free over $25</span>
+          </div>
+        </div>
+      `;
+      
+      // Group menu by category
+      const menuByCategory = {};
+      restaurant.menu.forEach(item => {
+        if (!menuByCategory[item.category]) {
+          menuByCategory[item.category] = [];
+        }
+        menuByCategory[item.category].push(item);
+      });
+      
+      // Render menu
+      document.getElementById('restaurant-menu').innerHTML = Object.entries(menuByCategory).map(([category, items]) => `
+        <div class="mb-6">
+          <h2 class="text-lg font-bold mb-3">${category}</h2>
+          <div class="space-y-3">
+            ${items.map(item => {
+              const cartItem = state.cart.find(c => c.id === item.id);
+              const quantity = cartItem ? cartItem.quantity : 0;
+              return `
+                <div class="bg-white rounded-2xl p-3 flex gap-3 shadow-sm">
+                  <img src="${item.image}" alt="${item.name}" class="w-24 h-24 rounded-xl object-cover">
+                  <div class="flex-1">
+                    <h3 class="font-semibold text-gray-900 mb-1">${item.name}</h3>
+                    <p class="text-gray-500 text-sm mb-2 line-clamp-2">${item.description}</p>
+                    <div class="flex items-center justify-between">
+                      <span class="font-bold text-primary">$${item.price.toFixed(2)}</span>
+                      ${quantity > 0 ? `
+                        <div class="flex items-center gap-2">
+                          <button onclick="updateCartItem(${item.id}, -1)" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 font-bold pulse-btn">-</button>
+                          <span class="font-bold text-gray-900 w-6 text-center">${quantity}</span>
+                          <button onclick="updateCartItem(${item.id}, 1)" class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold pulse-btn">+</button>
+                        </div>
+                      ` : `
+                        <button onclick="addToCart(${item.id})" class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white pulse-btn">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                          </svg>
+                        </button>
+                      `}
                     </div>
+                  </div>
                 </div>
-            `).join('');
-        }
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `).join('');
+      
+      showScreen('restaurant');
+    }
 
-        function openMenu(key) {
-            const res = data[key];
-            document.getElementById('menu-hero').style.backgroundImage = `url('${res.img}')`;
-            document.getElementById('menu-title').innerText = res.name;
-            document.getElementById('menu-items-container').innerHTML = res.menu.map(item => `
-                <div class="bg-[#121212] p-6 rounded-[28px] flex justify-between items-center mb-4">
-                    <div><h4 class="font-bold text-lg">${item.n}</h4><p class="text-yellow-500 font-black">${item.p} GEL</p></div>
-                    <button onclick="addToCart('${item.n}', ${item.p}); event.stopPropagation();" class="w-12 h-12 bg-white/10 rounded-2xl font-bold text-xl">+</button>
+    // ==================== CART FUNCTIONS ====================
+    function addToCart(itemId) {
+      const restaurant = state.selectedRestaurant;
+      const item = restaurant.menu.find(m => m.id === itemId);
+      if (!item) return;
+      
+      const existingItem = state.cart.find(c => c.id === itemId);
+      if (existingItem) {
+        existingItem.quantity++;
+      } else {
+        state.cart.push({
+          ...item,
+          quantity: 1,
+          restaurantId: restaurant.id,
+          restaurantName: restaurant.name,
+          distance: restaurant.distance,
+          deliveryFee: restaurant.deliveryFee
+        });
+      }
+      
+      updateCartBadge();
+      openRestaurant(restaurant.id); // Re-render menu
+    }
+
+    function updateCartItem(itemId, change) {
+      const item = state.cart.find(c => c.id === itemId);
+      if (!item) return;
+      
+      item.quantity += change;
+      if (item.quantity <= 0) {
+        state.cart = state.cart.filter(c => c.id !== itemId);
+      }
+      
+      updateCartBadge();
+      
+      if (state.currentScreen === 'restaurant' && state.selectedRestaurant) {
+        openRestaurant(state.selectedRestaurant.id);
+      } else if (state.currentScreen === 'cart') {
+        renderCart();
+      }
+    }
+
+    function updateCartBadge() {
+      const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+      document.getElementById('cart-badge').textContent = totalItems;
+      
+      const floatingCart = document.getElementById('floating-cart');
+      if (totalItems > 0 && state.currentScreen !== 'cart' && state.currentScreen !== 'checkout') {
+        floatingCart.classList.remove('hidden');
+      } else {
+        floatingCart.classList.add('hidden');
+      }
+    }
+
+    function calculateTotal() {
+      const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const distance = state.cart.length > 0 ? state.cart[0].distance : 0;
+      const baseDeliveryFee = state.cart.length > 0 ? state.cart[0].deliveryFee : 0;
+      const deliveryFee = baseDeliveryFee + (distance * 0.5); // $0.50 per km
+      const serviceFee = subtotal * 0.05; // 5% service fee
+      const total = subtotal + deliveryFee + serviceFee;
+      
+      return { subtotal, deliveryFee, serviceFee, total, distance };
+    }
+
+    function renderCart() {
+      const cartItems = document.getElementById('cart-items');
+      const cartSummary = document.getElementById('cart-summary');
+      
+      if (state.cart.length === 0) {
+        cartItems.innerHTML = `
+          <div class="flex flex-col items-center justify-center py-16">
+            <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Your cart is empty</h3>
+            <p class="text-gray-500 text-center mb-6">Browse restaurants and add items to get started</p>
+            <button onclick="showScreen('home')" class="bg-primary text-white font-bold px-8 py-3 rounded-full pulse-btn">
+              Browse Restaurants
+            </button>
+          </div>
+        `;
+        cartSummary.innerHTML = '';
+        return;
+      }
+      
+      const restaurantName = state.cart[0].restaurantName;
+      
+      cartItems.innerHTML = `
+        <div class="bg-white rounded-3xl p-4 mb-4">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 bg-primary-light rounded-full flex items-center justify-center">
+              <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+            </div>
+            <div>
+              <p class="font-semibold text-gray-900">${restaurantName}</p>
+              <p class="text-sm text-gray-500">${state.cart.length} items</p>
+            </div>
+          </div>
+          
+          <div class="space-y-4">
+            ${state.cart.map(item => `
+              <div class="flex items-center gap-3">
+                <img src="${item.image}" alt="${item.name}" class="w-16 h-16 rounded-xl object-cover">
+                <div class="flex-1">
+                  <h4 class="font-semibold text-gray-900">${item.name}</h4>
+                  <p class="text-primary font-bold">$${(item.price * item.quantity).toFixed(2)}</p>
                 </div>
-            `).join('');
-            navTo('menu-page');
-        }
+                <div class="flex items-center gap-2">
+                  <button onclick="updateCartItem(${item.id}, -1)" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 font-bold pulse-btn">-</button>
+                  <span class="font-bold text-gray-900 w-6 text-center">${item.quantity}</span>
+                  <button onclick="updateCartItem(${item.id}, 1)" class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold pulse-btn">+</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        
+        <div class="bg-white rounded-3xl p-4">
+          <h3 class="font-semibold text-gray-900 mb-3">Add a note</h3>
+          <textarea placeholder="Special instructions for your order..." class="w-full bg-gray-100 rounded-2xl px-4 py-3 outline-none resize-none h-20"></textarea>
+        </div>
+      `;
+      
+      const { subtotal, deliveryFee, serviceFee, total, distance } = calculateTotal();
+      
+      cartSummary.innerHTML = `
+        <h3 class="font-semibold text-gray-900 mb-4">Order Summary</h3>
+        <div class="space-y-3 mb-4">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600">Subtotal</span>
+            <span class="font-semibold">$${subtotal.toFixed(2)}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600">Delivery Fee (${distance} km)</span>
+            <span class="font-semibold">$${deliveryFee.toFixed(2)}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600">Service Fee</span>
+            <span class="font-semibold">$${serviceFee.toFixed(2)}</span>
+          </div>
+          <div class="border-t border-gray-200 pt-3 flex items-center justify-between">
+            <span class="font-bold text-lg">Total</span>
+            <span class="font-bold text-lg text-primary">$${total.toFixed(2)}</span>
+          </div>
+        </div>
+        <button onclick="showScreen('checkout')" class="w-full bg-primary text-white font-bold py-4 rounded-3xl pulse-btn">
+          Proceed to Checkout
+        </button>
+      `;
+    }
 
-        function addToCart(n, p) {
-            cart.push({n, p});
-            const total = cart.reduce((s, i) => s + i.p, 0);
-            document.getElementById('cart-total').innerText = total + " GEL";
-            document.getElementById('checkout-bar').style.display = 'flex';
-        }
+    // ==================== CHECKOUT FUNCTIONS ====================
+    function renderCheckout() {
+      const { subtotal, deliveryFee, serviceFee, total, distance } = calculateTotal();
+      
+      document.getElementById('checkout-summary').innerHTML = `
+        <h3 class="font-semibold text-gray-900 mb-4">Order Summary</h3>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600">Subtotal</span>
+            <span class="font-semibold">$${subtotal.toFixed(2)}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600">Delivery Fee (${distance} km)</span>
+            <span class="font-semibold">$${deliveryFee.toFixed(2)}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600">Service Fee</span>
+            <span class="font-semibold">$${serviceFee.toFixed(2)}</span>
+          </div>
+          <div class="border-t border-gray-200 pt-3 flex items-center justify-between">
+            <span class="font-bold text-lg">Total</span>
+            <span id="checkout-total" class="font-bold text-lg text-primary">$${total.toFixed(2)}</span>
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('checkout-total-btn').textContent = `$${total.toFixed(2)}`;
+      document.getElementById('checkout-address').textContent = state.currentAddress;
+    }
 
-        function processPayment() {
-            const total = cart.reduce((s, i) => s + i.p, 0);
-            const btn = document.getElementById('checkout-bar');
-            btn.innerHTML = "PROCESSING...";
+    function selectPayment(method) {
+      state.paymentMethod = method;
+      
+      document.querySelectorAll('.payment-option').forEach(option => {
+        if (option.dataset.method === method) {
+          option.classList.remove('border-gray-200');
+          option.classList.add('border-primary');
+          option.querySelector('div:last-child').innerHTML = `
+            <div class="w-5 h-5 border-2 border-primary rounded-full flex items-center justify-center">
+              <div class="w-3 h-3 bg-primary rounded-full"></div>
+            </div>
+          `;
+        } else {
+          option.classList.remove('border-primary');
+          option.classList.add('border-gray-200');
+          option.querySelector('div:last-child').innerHTML = `
+            <div class="w-5 h-5 border-2 border-gray-300 rounded-full"></div>
+          `;
+        }
+      });
+      
+      if (method === 'cash') {
+        document.getElementById('card-details').classList.add('hidden');
+        document.getElementById('cash-details').classList.remove('hidden');
+      } else {
+        document.getElementById('card-details').classList.remove('hidden');
+        document.getElementById('cash-details').classList.add('hidden');
+      }
+    }
+
+    function calculateChange() {
+      const cashAmount = parseFloat(document.getElementById('cash-amount').value) || 0;
+      const { total } = calculateTotal();
+      const change = Math.max(0, cashAmount - total);
+      document.getElementById('change-amount').textContent = `$${change.toFixed(2)}`;
+    }
+
+    function placeOrder() {
+      const { total } = calculateTotal();
+      const orderId = `FD-${Math.floor(10000 + Math.random() * 90000)}`;
+      
+      // Create order
+      const order = {
+        id: orderId,
+        items: [...state.cart],
+        total: total,
+        status: 'preparing',
+        statusProgress: 33,
+        restaurantName: state.cart[0].restaurantName,
+        createdAt: new Date(),
+        estimatedTime: '25-35 min'
+      };
+      
+      state.orders.unshift(order);
+      state.cart = [];
+      updateCartBadge();
+      
+      // Show modal
+      document.getElementById('modal-order-id').textContent = `#${orderId}`;
+      document.getElementById('order-modal').classList.remove('hidden');
+    }
+
+    function closeOrderModal() {
+      document.getElementById('order-modal').classList.add('hidden');
+      showScreen('home');
+    }
+
+    function trackOrder() {
+      document.getElementById('order-modal').classList.add('hidden');
+      showScreen('orders');
+    }
+
+    // ==================== ORDERS FUNCTIONS ====================
+    function renderOrders() {
+      const activeOrders = document.getElementById('active-orders');
+      const historyOrders = document.getElementById('history-orders');
+      
+      const active = state.orders.filter(o => o.status !== 'delivered');
+      const history = state.orders.filter(o => o.status === 'delivered');
+      
+      if (active.length === 0) {
+        activeOrders.innerHTML = `
+          <div class="flex flex-col items-center justify-center py-12">
+            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 mb-2">No active orders</h3>
+            <p class="text-gray-500 text-center">Your active orders will appear here</p>
+          </div>
+        `;
+      } else {
+        activeOrders.innerHTML = active.map(order => `
+          <div class="bg-white rounded-3xl p-4 mb-4">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <p class="font-bold text-gray-900">${order.restaurantName}</p>
+                <p class="text-sm text-gray-500">${order.id} • ${order.items.length} items</p>
+              </div>
+              <span class="bg-primary-light text-primary text-sm font-semibold px-3 py-1 rounded-full capitalize">${order.status.replace('-', ' ')}</span>
+            </div>
             
-            setTimeout(() => {
-                alert("Order Placed Successfully! 🚀");
-                document.getElementById('order-price').innerText = total + " GEL";
-                document.getElementById('active-order-card').classList.remove('hidden');
-                document.getElementById('checkout-bar').style.display = 'none';
-                cart = [];
-                navTo('orders-page');
-                
-                // Animation for the tracking bar
-                setTimeout(() => {
-                    document.getElementById('order-progress').style.width = "70%";
-                }, 1000);
-            }, 2000);
-        }
+            <div class="mb-4">
+              <div class="flex items-center justify-between text-sm mb-2">
+                <span class="text-gray-500">Order Progress</span>
+                <span class="font-semibold text-primary">${order.estimatedTime}</span>
+              </div>
+              <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div class="h-full bg-primary rounded-full transition-all" style="width: ${order.statusProgress}%"></div>
+              </div>
+              <div class="flex justify-between mt-2 text-xs">
+                <span class="${order.statusProgress >= 33 ? 'text-primary font-semibold' : 'text-gray-400'}">Preparing</span>
+                <span class="${order.statusProgress >= 66 ? 'text-primary font-semibold' : 'text-gray-400'}">On the Way</span>
+                <span class="${order.statusProgress >= 100 ? 'text-primary font-semibold' : 'text-gray-400'}">Delivered</span>
+              </div>
+            </div>
+            
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-lg">$${order.total.toFixed(2)}</span>
+              <button class="bg-gray-100 text-gray-700 font-semibold px-4 py-2 rounded-full text-sm pulse-btn">Track Order</button>
+            </div>
+          </div>
+        `).join('');
+      }
+      
+      if (history.length === 0) {
+        historyOrders.innerHTML = `
+          <div class="flex flex-col items-center justify-center py-12">
+            <p class="text-gray-500">No order history yet</p>
+          </div>
+        `;
+      } else {
+        historyOrders.innerHTML = history.map(order => `
+          <div class="bg-white rounded-3xl p-4 mb-4">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <p class="font-bold text-gray-900">${order.restaurantName}</p>
+                <p class="text-sm text-gray-500">${order.id}</p>
+              </div>
+              <span class="bg-green-100 text-green-700 text-sm font-semibold px-3 py-1 rounded-full">Delivered</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="font-bold">$${order.total.toFixed(2)}</span>
+              <button class="bg-primary text-white font-semibold px-4 py-2 rounded-full text-sm pulse-btn">Reorder</button>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
 
-        renderHome();
-    </script>
+    function showOrderTab(tab) {
+      document.querySelectorAll('.order-tab').forEach(btn => {
+        if (btn.dataset.tab === tab) {
+          btn.classList.add('bg-white', 'text-gray-900', 'shadow-sm');
+          btn.classList.remove('text-gray-500');
+        } else {
+          btn.classList.remove('bg-white', 'text-gray-900', 'shadow-sm');
+          btn.classList.add('text-gray-500');
+        }
+      });
+      
+      if (tab === 'active') {
+        document.getElementById('active-orders').classList.remove('hidden');
+        document.getElementById('history-orders').classList.add('hidden');
+      } else {
+        document.getElementById('active-orders').classList.add('hidden');
+        document.getElementById('history-orders').classList.remove('hidden');
+      }
+    }
+
+    // ==================== LOCATION FUNCTIONS ====================
+    function useCurrentLocation() {
+      state.currentAddress = '123 Main Street, Apt 4B';
+      document.getElementById('current-address').textContent = state.currentAddress;
+      showScreen('home');
+    }
+
+    function selectAddress(name, address) {
+      state.currentAddress = address;
+      document.getElementById('current-address').textContent = address;
+      showScreen('home');
+    }
+
+    // ==================== SEARCH FUNCTIONS ====================
+    function handleSearch(query) {
+      const results = document.getElementById('search-results');
+      if (!query) {
+        results.innerHTML = '';
+        return;
+      }
+      
+      const filtered = state.restaurants.filter(r => 
+        r.name.toLowerCase().includes(query.toLowerCase()) ||
+        r.category.toLowerCase().includes(query.toLowerCase())
+      );
+      
+      results.innerHTML = filtered.map(r => `
+        <div onclick="openRestaurant(${r.id})" class="bg-gray-50 rounded-2xl p-3 flex gap-3 cursor-pointer hover:bg-gray-100">
+          <img src="${r.image}" alt="${r.name}" class="w-16 h-16 rounded-xl object-cover">
+          <div class="flex-1">
+            <h4 class="font-semibold text-gray-900">${r.name}</h4>
+            <div class="flex items-center gap-2 text-sm text-gray-500">
+              <span class="flex items-center gap-1">
+                <svg class="w-3 h-3 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                ${r.rating}
+              </span>
+              <span>${r.distance} km</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function searchFor(query) {
+      document.getElementById('search-input').value = query;
+      handleSearch(query);
+    }
+
+    function toggleFavorite(id) {
+      // Toggle favorite functionality (simplified)
+      console.log('Toggle favorite for restaurant:', id);
+    }
+
+    // ==================== INITIALIZATION ====================
+    document.addEventListener('DOMContentLoaded', () => {
+      // Simulate order progress for demo
+      setInterval(() => {
+        state.orders.forEach(order => {
+          if (order.status === 'preparing' && order.statusProgress < 33) {
+            order.statusProgress = 33;
+          } else if (order.status === 'preparing' && order.statusProgress >= 33) {
+            order.status = 'on-the-way';
+            order.statusProgress = 66;
+          } else if (order.status === 'on-the-way' && order.statusProgress >= 66) {
+            order.status = 'delivered';
+            order.statusProgress = 100;
+          }
+          
+          if (state.currentScreen === 'orders') {
+            renderOrders();
+          }
+        });
+      }, 15000);
+    });
+  </script>
 </body>
 </html>
